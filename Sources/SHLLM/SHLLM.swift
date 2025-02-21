@@ -7,11 +7,6 @@ import Tokenizers
 
 public struct SHLLM {
     public init() {
-        Swift.print(Bundle.shllm.url(
-            forResource: "a",
-            withExtension: "png",
-            subdirectory: "Resources"
-        )?.description ?? "")
     }
 
     public func hello() async throws -> Void {
