@@ -1,0 +1,12 @@
+--disable     \
+  hoistAwait, \
+  hoistTry
+
+--decimalgrouping 3,5
+--funcattributes prev-line
+--minversion 0.47.2
+--maxwidth 96
+--typeattributes prev-line
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first

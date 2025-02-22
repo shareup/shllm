@@ -7,14 +7,19 @@ let package = Package(
     name: "SHLLM",
     platforms: [.iOS(.v16), .macOS(.v14)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
+        // Products define the executables and libraries a package produces, making them visible
+        // to other packages.
         .library(
             name: "SHLLM",
-            targets: ["SHLLM"]),
+            targets: ["SHLLM"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift-examples/", branch: "main"),
-        .package(url: "https://github.com/huggingface/swift-transformers", .upToNextMinor(from: "0.1.17")),
+        .package(
+            url: "https://github.com/huggingface/swift-transformers",
+            .upToNextMinor(from: "0.1.17")
+        ),
     ],
     targets: [
         .target(
@@ -25,7 +30,7 @@ let package = Package(
                 .product(name: "Transformers", package: "swift-transformers"),
             ],
             resources: [
-                .copy("Resources")
+                .copy("Resources"),
             ]
         ),
         .testTarget(
