@@ -8,12 +8,18 @@ import Tokenizers
 public actor Phi3 {
     private let context: ModelContext
     private let configuration: ModelConfiguration
+    private let directory: URL
 
-    public init() async throws {
+    public init(directory dir: URL) async throws {
+        directory = dir
         let decoder = JSONDecoder()
 
-        let directory = try Self.directory
-        let config = try Self.config
+        let config = try Data(
+                contentsOf: directory.appending(
+                    path: "config.json",
+                    directoryHint: .notDirectory
+                )
+            )
 
         let baseConfig = try decoder.decode(
             BaseConfiguration.self,
@@ -32,8 +38,29 @@ public actor Phi3 {
             quantization: baseConfig.quantization
         )
 
-        let tokenizerConfig = try Self.tokenizerConfig
-        let tokenizerData = try Self.tokenizerData
+        guard let tokenizerConfigJSON = try JSONSerialization.jsonObject(
+            with: try Data(contentsOf: directory.appending(
+                path: "tokenizer_config.json",
+                directoryHint: .notDirectory
+            ))) as? [NSString: Any] else {
+            throw SHLLMError.invalidOrMissingConfig(
+                "tokenizer_config.json"
+            )
+        }
+
+        let tokenizerConfig = Config(tokenizerConfigJSON)
+
+        guard let tokenizerDataJSON = try JSONSerialization.jsonObject(
+            with: try Data(contentsOf: directory.appending(
+                path: "tokenizer.json",
+                directoryHint: .notDirectory
+            ))) as? [NSString: Any] else {
+            throw SHLLMError.invalidOrMissingConfig(
+                "tokenizer.json"
+            )
+        }
+
+        let tokenizerData = Config(tokenizerDataJSON)
 
         let tokenizer = try PreTrainedTokenizer(
             tokenizerConfig: tokenizerConfig,
@@ -79,8 +106,8 @@ public actor Phi3 {
     }
 }
 
-private extension Phi3 {
-    static var directory: URL {
+extension Phi3 {
+    static var bundleDirectory: URL {
         get throws {
             guard let url = Bundle.shllm.url(
                 forResource: "Phi-3.5-mini-instruct-4bit",
@@ -91,55 +118,6 @@ private extension Phi3 {
                     .directoryNotFound("Phi-3.5-mini-instruct-4bit")
             }
             return url
-        }
-    }
-
-    static var config: Data {
-        get throws {
-            try Data(
-                contentsOf: directory.appending(
-                    path: "config.json",
-                    directoryHint: .notDirectory
-                )
-            )
-        }
-    }
-
-    static var tokenizerConfig: Config {
-        get throws {
-            let data = try Data(contentsOf: directory.appending(
-                path: "tokenizer_config.json",
-                directoryHint: .notDirectory
-            ))
-
-            guard let json = try JSONSerialization.jsonObject(
-                with: data
-            ) as? [NSString: Any] else {
-                throw SHLLMError.invalidOrMissingConfig(
-                    "tokenizer_config.json"
-                )
-            }
-
-            return Config(json)
-        }
-    }
-
-    static var tokenizerData: Config {
-        get throws {
-            let data = try Data(contentsOf: directory.appending(
-                path: "tokenizer.json",
-                directoryHint: .notDirectory
-            ))
-
-            guard let json = try JSONSerialization.jsonObject(
-                with: data
-            ) as? [NSString: Any] else {
-                throw SHLLMError.invalidOrMissingConfig(
-                    "tokenizer.json"
-                )
-            }
-
-            return Config(json)
         }
     }
 }
