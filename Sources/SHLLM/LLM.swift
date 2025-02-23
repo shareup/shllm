@@ -45,6 +45,13 @@ final class LLM {
         )
     }
 
+    static func mistralNemo(directory: URL) async throws -> LLM {
+        try await Self(
+            directory: directory,
+            modelInit: LlamaModel.init
+        )
+    }
+
     static func openELM(directory: URL) async throws -> LLM {
         try await Self(
             directory: directory,
@@ -77,6 +84,13 @@ final class LLM {
         try await Self(
             directory: directory,
             modelInit: Qwen2Model.init
+        )
+    }
+
+    static func smolLM(directory: URL) async throws -> LLM {
+        try await Self(
+            directory: directory,
+            modelInit: LlamaModel.init
         )
     }
 

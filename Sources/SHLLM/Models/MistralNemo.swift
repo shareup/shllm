@@ -5,11 +5,11 @@ import MLXLLM
 import MLXLMCommon
 import Tokenizers
 
-public actor Phi3 {
+public actor MistralNemo {
     private let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
-        let llm = try await LLM.phi3(directory: directory)
+        let llm = try await LLM.mistralNemo(directory: directory)
         self.llm = .init(llm)
     }
 
@@ -23,16 +23,16 @@ public actor Phi3 {
     }
 }
 
-extension Phi3 {
+extension MistralNemo {
     static var bundleDirectory: URL {
         get throws {
+            let dir = "Mistral-Nemo-Instruct-2407-4bit"
             guard let url = Bundle.shllm.url(
-                forResource: "Phi-3.5-mini-instruct-4bit",
+                forResource: dir,
                 withExtension: nil,
                 subdirectory: "Resources"
             ) else {
-                throw SHLLMError
-                    .directoryNotFound("Phi-3.5-mini-instruct-4bit")
+                throw SHLLMError.directoryNotFound(dir)
             }
             return url
         }
