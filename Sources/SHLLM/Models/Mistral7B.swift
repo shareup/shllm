@@ -5,7 +5,7 @@ import MLXLLM
 import MLXLMCommon
 import Tokenizers
 
-public actor SmolLM: ModelProtocol {
+public actor Mistral7B: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
@@ -14,10 +14,10 @@ public actor SmolLM: ModelProtocol {
     }
 }
 
-extension SmolLM {
+extension Mistral7B {
     static var bundleDirectory: URL {
         get throws {
-            let dir = "SmolLM-135M-Instruct-4bit"
+            let dir = "Mistral-7B-Instruct-v0.3-4bit"
             guard let url = Bundle.shllm.url(
                 forResource: dir,
                 withExtension: nil,

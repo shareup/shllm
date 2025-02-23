@@ -5,7 +5,7 @@ import MLXLLM
 import MLXLMCommon
 import Tokenizers
 
-final class LLM {
+public final class LLM {
     private let directory: URL
     private let context: ModelContext
     private let configuration: ModelConfiguration
@@ -39,13 +39,6 @@ final class LLM {
     }
 
     static func llama(directory: URL) async throws -> LLM {
-        try await Self(
-            directory: directory,
-            modelInit: LlamaModel.init
-        )
-    }
-
-    static func mistralNemo(directory: URL) async throws -> LLM {
         try await Self(
             directory: directory,
             modelInit: LlamaModel.init
