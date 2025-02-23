@@ -1,9 +1,4 @@
 import Foundation
-import struct Hub.Config
-import MLX
-import MLXLLM
-import MLXLMCommon
-import Tokenizers
 
 public actor MistralNemo: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
