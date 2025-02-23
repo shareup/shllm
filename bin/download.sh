@@ -38,17 +38,20 @@ if [[ -z "${id}" ]]; then
   exit 2
 fi
 
+project=$(dirname "$0")
+pushd "$project/.." &>/dev/null
+
 metaurl="https://huggingface.co/api/models/mlx-community/${id}"
 echo "${metaurl}"
 
 files=$(curl -s "${metaurl}" | jq -r '.siblings[].rfilename')
 echo "${files}"
 
-pushd Sources/SHLLM/Resources
+pushd Sources/SHLLM/Resources &>/dev/null
 
 mkdir -p "${id}"
 
-pushd "${id}"
+pushd "${id}" &>/dev/null
 
 for file in ${files[@]}; do
   curl -L -# -o "${file}" "https://huggingface.co/mlx-community/${id}/resolve/main/${file}"

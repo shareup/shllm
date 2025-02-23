@@ -1,6 +1,12 @@
 @testable import SHLLM
 import Testing
 
+extension Phi3 {
+    init() async throws {
+        try await self.init(directory: Self.bundleDirectory)
+    }
+}
+
 @Test
 func canLoadAndQueryModel() async throws {
     let phi3 = try await Phi3()
