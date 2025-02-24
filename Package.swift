@@ -15,10 +15,13 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift-examples/", branch: "main"),
+        .package(
+            url: "https://github.com/shareup/mlx-swift-examples",
+            from: "0.0.1"
+        ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
-            .upToNextMinor(from: "0.1.17")
+            from: "0.1.17"
         ),
     ],
     targets: [
@@ -27,7 +30,11 @@ let package = Package(
             dependencies: [
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
-                .product(name: "Transformers", package: "swift-transformers"),
+                .product(
+                    name: "Transformers",
+                    package: "swift-transformers",
+                    moduleAliases: ["Models": "TransformersModels"]
+                ),
             ],
             resources: [
                 .copy("Resources"),
