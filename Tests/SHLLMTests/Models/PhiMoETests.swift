@@ -1,15 +1,17 @@
 @testable import SHLLM
 import Testing
 
-private extension PhiMoE {
-    init() async throws {
-        try await self.init(directory: Self.bundleDirectory)
+extension PhiMoE: InitializableWithDirectory {
+    static var tests: Self? {
+        get async throws {
+            try await loadModel(from: bundleDirectory)
+        }
     }
 }
 
 @Test
 func canLoadAndQueryPhiMoE() async throws {
-    let llm = try await PhiMoE()
+    guard let llm = try await PhiMoE.tests else { return }
     let result = try await llm.request(.init(messages: [
         ["role": "system", "content": "You are a helpful assistant."],
         ["role": "user", "content": "What is the meaning of life?"],

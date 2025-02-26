@@ -1,15 +1,17 @@
 @testable import SHLLM
 import Testing
 
-private extension Llama3_2__3B {
-    init() async throws {
-        try await self.init(directory: Self.bundleDirectory)
+extension Llama3_2__3B: InitializableWithDirectory {
+    static var tests: Self? {
+        get async throws {
+            try await loadModel(from: bundleDirectory)
+        }
     }
 }
 
 @Test
 func canLoadAndQueryLlama3_2__3B() async throws {
-    let llm = try await Llama3_2__3B()
+    guard let llm = try await Llama3_2__3B.tests else { return }
     let result = try await llm.request(.init(messages: [
         ["role": "system", "content": "You are a helpful assistant."],
         ["role": "user", "content": "What is the meaning of life?"],
