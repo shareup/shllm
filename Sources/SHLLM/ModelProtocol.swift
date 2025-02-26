@@ -12,7 +12,11 @@ public extension ModelProtocol {
         maxTokenCount: Int = 1024 * 1024
     ) async throws -> T {
         try await llm.withLock { llm in
-            try await llm.request(tools: tools, messages: messages, maxTokenCount: maxTokenCount)
+            try await llm.request(
+                tools: tools,
+                messages: messages,
+                maxTokenCount: maxTokenCount
+            )
         }
     }
 

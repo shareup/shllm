@@ -1,5 +1,5 @@
-@testable import SHLLM
 import Foundation
+@testable import SHLLM
 import Testing
 
 extension Qwen2_5__1_5B: InitializableWithDirectory {
@@ -33,7 +33,6 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
             case arguments
         }
 
-        // Decoding: Look at the "name" field and then decode arguments accordingly.
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             let toolName = try container.decode(String.self, forKey: .name)
@@ -44,12 +43,15 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
                 guard let location = arguments["location"] else {
                     throw DecodingError.keyNotFound(
                         CodingKeys.arguments,
-                        DecodingError.Context(codingPath: [CodingKeys.arguments],
-                                              debugDescription: "Missing 'location' key")
+                        DecodingError.Context(
+                            codingPath: [CodingKeys.arguments],
+                            debugDescription: "Missing 'location' key"
+                        )
                     )
                 }
                 guard let unitString = arguments["unit"],
-                      let unit = WeatherUnit(rawValue: unitString) else {
+                      let unit = WeatherUnit(rawValue: unitString)
+                else {
                     throw DecodingError.dataCorruptedError(
                         forKey: CodingKeys.arguments,
                         in: container,
@@ -67,15 +69,14 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
             }
         }
 
-        // Encoding: Create a dictionary with "name" and "arguments" based on the enum case.
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             switch self {
-            case .getCurrentWeather(let location, let unit):
+            case let .getCurrentWeather(location, unit):
                 try container.encode("getCurrentWeather", forKey: .name)
                 let arguments: [String: String] = [
                     "location": location,
-                    "unit": unit.rawValue
+                    "unit": unit.rawValue,
                 ]
                 try container.encode(arguments, forKey: .arguments)
             }
@@ -92,10 +93,14 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
             name: "get_current_weather",
             description: "Get the current weather in a given location",
             parameters: [
-                .string(name: "location", description: "The city and state, e.g. San Francisco, CA", required: true),
-                .string(name: "unit", restrictTo: ["celsius", "fahrenheit"])
+                .string(
+                    name: "location",
+                    description: "The city and state, e.g. San Francisco, CA",
+                    required: true
+                ),
+                .string(name: "unit", restrictTo: ["celsius", "fahrenheit"]),
             ]
-        )
+        ),
     ])
 
     let tool1: Tool = try await llm.request(
@@ -129,4 +134,3 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
 
     #expect(tool2 == expectedTool2)
 }
-

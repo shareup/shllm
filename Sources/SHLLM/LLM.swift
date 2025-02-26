@@ -4,7 +4,6 @@ import struct Hub.Config
 import Metal
 import MLX
 import MLXLLM
-import MLXNN
 import MLXLMCommon
 import MLXNN
 import Tokenizers
@@ -199,7 +198,10 @@ extension LLM {
         messages: [Message],
         maxTokenCount: Int = 1024 * 1024
     ) async throws -> T {
-        let result = try await request(.init(messages: messages, tools: tools.toSpec()), maxTokenCount: maxTokenCount)
+        let result = try await request(
+            .init(messages: messages, tools: tools.toSpec()),
+            maxTokenCount: maxTokenCount
+        )
 
         let decoder = JSONDecoder()
 
@@ -213,7 +215,7 @@ extension LLM {
         messages: [Message],
         maxTokenCount: Int = 1024 * 1024
     ) async throws -> String {
-        return try await request(.init(messages: messages), maxTokenCount: maxTokenCount)
+        try await request(.init(messages: messages), maxTokenCount: maxTokenCount)
     }
 
     func request(
@@ -281,7 +283,7 @@ private extension String {
         let prefix = "<tool_call>\n"
         let suffix = "\n</tool_call>"
 
-        var copy = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        var copy = trimmingCharacters(in: .whitespacesAndNewlines)
         copy.removeFirst(prefix.count)
         copy.removeLast(suffix.count)
         return copy
