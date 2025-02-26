@@ -4,6 +4,7 @@ import struct Hub.Config
 import Metal
 import MLX
 import MLXLLM
+import MLXNN
 import MLXLMCommon
 import MLXNN
 import Tokenizers
