@@ -194,6 +194,28 @@ public final class LLM {
 }
 
 extension LLM {
+    func request<T: Codable>(
+        tools: Tools,
+        messages: [Message],
+        maxTokenCount: Int = 1024 * 1024
+    ) async throws -> T {
+        let result = try await request(.init(messages: messages, tools: tools.toSpec()), maxTokenCount: maxTokenCount)
+
+        let decoder = JSONDecoder()
+
+        return try decoder.decode(
+            T.self,
+            from: Data(result.trimmingToolCallMarkup().utf8)
+        )
+    }
+
+    func request(
+        messages: [Message],
+        maxTokenCount: Int = 1024 * 1024
+    ) async throws -> String {
+        return try await request(.init(messages: messages), maxTokenCount: maxTokenCount)
+    }
+
     func request(
         _ input: UserInput,
         maxTokenCount: Int = 1024 * 1024
@@ -252,4 +274,16 @@ private func loadWeights(
     try model.update(parameters: parameters, verify: [])
 
     eval(model)
+}
+
+private extension String {
+    func trimmingToolCallMarkup() -> String {
+        let prefix = "<tool_call>\n"
+        let suffix = "\n</tool_call>"
+
+        var copy = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        copy.removeFirst(prefix.count)
+        copy.removeLast(suffix.count)
+        return copy
+    }
 }
