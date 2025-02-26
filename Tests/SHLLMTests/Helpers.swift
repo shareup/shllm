@@ -26,6 +26,19 @@ protocol InitializableWithDirectory {
     init(directory: URL) async throws
 }
 
+let weatherToolFunction = ToolFunction(
+    name: "get_current_weather",
+    description: "Get the current weather in a given location",
+    parameters: [
+        .string(
+            name: "location",
+            description: "The city and state, e.g. San Francisco, CA",
+            required: true
+        ),
+        .string(name: "unit", restrictTo: ["celsius", "fahrenheit"]),
+    ]
+)
+
 enum WeatherTool: Codable, Hashable {
     case getCurrentWeather(location: String, unit: WeatherUnit)
 

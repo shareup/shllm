@@ -41,6 +41,7 @@ let package = Package(
 //                .copy("Resources/gemma-2-2b-it-4bit"),
 //                .copy("Resources/Phi-3.5-mini-instruct-4bit"),
 //                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
+//                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),

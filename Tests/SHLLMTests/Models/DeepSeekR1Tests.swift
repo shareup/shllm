@@ -25,23 +25,8 @@ func canLoadAndQueryDeepSeekR1() async throws {
 func canHelpMeFetchTheWeatherWithR1() async throws {
     guard let llm = try await DeepSeekR1.tests else { return }
 
-    let tools = Tools([
-        .init(
-            name: "get_current_weather",
-            description: "Get the current weather in a given location",
-            parameters: [
-                .string(
-                    name: "location",
-                    description: "The city and state, e.g. San Francisco, CA",
-                    required: true
-                ),
-                .string(name: "unit", restrictTo: ["celsius", "fahrenheit"]),
-            ]
-        ),
-    ])
-
     let tool1: WeatherTool = try await llm.request(
-        tools: tools,
+        tools: Tools([weatherToolFunction]),
         messages: [
             [
                 "role": "system",
@@ -59,7 +44,7 @@ func canHelpMeFetchTheWeatherWithR1() async throws {
     #expect(tool1 == expectedTool1)
 
     let tool2: WeatherTool = try await llm.request(
-        tools: tools,
+        tools: Tools([weatherToolFunction]),
         messages: [
             [
                 "role": "system",

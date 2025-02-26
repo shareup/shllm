@@ -17,7 +17,11 @@ public struct ToolFunction {
     public let description: String?
     public let parameters: [ToolFunctionParameter]
 
-    init(name: String, description: String? = nil, parameters: [ToolFunctionParameter]) {
+    public init(
+        name: String,
+        description: String? = nil,
+        parameters: [ToolFunctionParameter]
+    ) {
         self.name = name
         self.description = description
         self.parameters = parameters
@@ -54,7 +58,7 @@ public struct ToolFunctionParameter {
     public let description: String?
     public let required: Bool
 
-    static func string(
+    public static func string(
         name: String,
         description: String? = nil,
         required: Bool = false,
@@ -78,7 +82,7 @@ public struct ToolFunctionParameter {
         )
     }
 
-    static func number(
+    public static func number(
         name: String,
         description: String? = nil,
         required: Bool = false,
@@ -100,7 +104,7 @@ public struct ToolFunctionParameter {
         )
     }
 
-    static func integer(
+    public static func integer(
         name: String,
         description: String? = nil,
         required: Bool = false,
@@ -122,7 +126,7 @@ public struct ToolFunctionParameter {
         )
     }
 
-    static func array(
+    public static func array(
         name: String,
         description: String? = nil,
         required: Bool = false,
@@ -136,7 +140,7 @@ public struct ToolFunctionParameter {
         )
     }
 
-    static func object(
+    public static func object(
         name: String,
         description: String? = nil,
         required: Bool = false,
@@ -150,7 +154,7 @@ public struct ToolFunctionParameter {
         )
     }
 
-    static func boolean(
+    public static func boolean(
         name: String,
         description: String? = nil,
         required: Bool = false
@@ -158,7 +162,7 @@ public struct ToolFunctionParameter {
         .init(name: name, type: .boolean, description: description, required: required)
     }
 
-    static func null(
+    public static func null(
         name: String,
         description: String? = nil,
         required: Bool = false
@@ -166,7 +170,7 @@ public struct ToolFunctionParameter {
         .init(name: name, type: .null, description: description, required: required)
     }
 
-    init(
+    public init(
         name: String,
         type: ToolFunctionParameterType,
         description: String? = nil,
