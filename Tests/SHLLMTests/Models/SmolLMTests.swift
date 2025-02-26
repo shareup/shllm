@@ -1,15 +1,17 @@
 @testable import SHLLM
 import Testing
 
-private extension SmolLM {
-    init() async throws {
-        try await self.init(directory: Self.bundleDirectory)
+extension SmolLM: InitializableWithDirectory {
+    static var tests: Self? {
+        get async throws {
+            try await loadModel(from: bundleDirectory)
+        }
     }
 }
 
 @Test
 func canLoadAndQuerySmolLM() async throws {
-    let llm = try await SmolLM()
+    guard let llm = try await SmolLM.tests else { return }
     let result = try await llm.request(.init(messages: [
         ["role": "system", "content": "You are a helpful assistant."],
         ["role": "user", "content": "What is the meaning of life?"],

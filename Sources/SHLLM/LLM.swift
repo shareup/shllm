@@ -1,5 +1,7 @@
+import CoreGraphics
 import Foundation
 import struct Hub.Config
+import Metal
 import MLX
 import MLXLLM
 import MLXNN
@@ -7,6 +9,21 @@ import MLXLMCommon
 import Tokenizers
 
 public final class LLM {
+    public static var isSupportedDevice: Bool {
+        guard let _ = MTLCreateSystemDefaultDevice() else {
+            return false
+        }
+        return true
+    }
+
+    static var assertSupportedDevice: Void {
+        get throws {
+            guard isSupportedDevice else {
+                throw SHLLMError.unsupportedDevice
+            }
+        }
+    }
+
     private let directory: URL
     private let context: ModelContext
     private let configuration: ModelConfiguration

@@ -36,8 +36,11 @@ let package = Package(
                     moduleAliases: ["Models": "TransformersModels"]
                 ),
             ],
-            resources: [
-                .copy("Resources"),
+//            resources: [
+//                .copy("Resources/gemma-2-2b-it-4bit"),
+//            ],
+            linkerSettings: [
+                .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
             ]
         ),
         .testTarget(
