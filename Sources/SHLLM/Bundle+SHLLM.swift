@@ -44,6 +44,20 @@ extension Bundle {
         }
         fatalError("unable to find bundle named '\(bundleName)'")
     }()
+
+    func directory(named name: String) throws -> URL {
+        if let url = url(forResource: name, withExtension: nil) {
+            return url
+        } else if let url = url(
+            forResource: name,
+            withExtension: nil,
+            subdirectory: "Resources"
+        ) {
+            return url
+        } else {
+            throw SHLLMError.directoryNotFound(name)
+        }
+    }
 }
 
 private class BundleLocator: NSObject {}

@@ -13,14 +13,7 @@ extension Qwen1_5 {
     static var bundleDirectory: URL {
         get throws {
             let dir = "Qwen1.5-0.5B-Chat-4bit"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }

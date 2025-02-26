@@ -13,14 +13,7 @@ extension CodeLlama {
     static var bundleDirectory: URL {
         get throws {
             let dir = "CodeLlama-13b-Instruct-hf-4bit-MLX"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }

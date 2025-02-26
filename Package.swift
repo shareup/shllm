@@ -35,10 +35,13 @@ let package = Package(
                     package: "swift-transformers",
                     moduleAliases: ["Models": "TransformersModels"]
                 ),
-            ],
+            ]/*,
+              * Uncomment this line to load models for tests
+              *
             resources: [
-                .copy("Resources"),
+                .copy("Resources/gemma-2-2b-it-4bit"),
             ]
+              */
         ),
         .testTarget(
             name: "SHLLMTests",

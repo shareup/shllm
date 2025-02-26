@@ -13,14 +13,7 @@ extension PhiMoE {
     static var bundleDirectory: URL {
         get throws {
             let dir = "Phi-3.5-MoE-instruct-4bit"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }

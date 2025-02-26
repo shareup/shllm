@@ -13,14 +13,7 @@ extension Gemma {
     static var bundleDirectory: URL {
         get throws {
             let dir = "quantized-gemma-2b-it"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }

@@ -13,14 +13,7 @@ extension DeepSeekR1 {
     static var bundleDirectory: URL {
         get throws {
             let dir = "DeepSeek-R1-Distill-Qwen-7B-4bit"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }

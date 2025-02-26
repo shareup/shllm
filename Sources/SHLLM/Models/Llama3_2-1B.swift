@@ -13,14 +13,7 @@ extension Llama3_2__1B {
     static var bundleDirectory: URL {
         get throws {
             let dir = "Llama-3.2-1B-Instruct-4bit"
-            guard let url = Bundle.shllm.url(
-                forResource: dir,
-                withExtension: nil,
-                subdirectory: "Resources"
-            ) else {
-                throw SHLLMError.directoryNotFound(dir)
-            }
-            return url
+            return try Bundle.shllm.directory(named: dir)
         }
     }
 }
