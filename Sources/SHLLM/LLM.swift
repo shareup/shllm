@@ -2,6 +2,7 @@ import Foundation
 import struct Hub.Config
 import MLX
 import MLXLLM
+import MLXNN
 import MLXLMCommon
 import Tokenizers
 
@@ -195,4 +196,40 @@ extension LLM {
 
         return result.output
     }
+}
+
+// FROM: https://github.com/ml-explore/mlx-swift-examples/blob/20701c0eeedd339ede4dd3b964152d814a3e9716/Libraries/MLXLMCommon/Load.swift#L61
+private func loadWeights(
+    modelDirectory: URL, model: LanguageModel, quantization: BaseConfiguration.Quantization? = nil
+) throws {
+    // load the weights
+    var weights = [String: MLXArray]()
+    let enumerator = FileManager.default.enumerator(
+        at: modelDirectory, includingPropertiesForKeys: nil)!
+    for case let url as URL in enumerator {
+        if url.pathExtension == "safetensors" {
+            let w = try loadArrays(url: url)
+            for (key, value) in w {
+                weights[key] = value
+            }
+        }
+    }
+
+    // per-model cleanup
+    weights = model.sanitize(weights: weights)
+
+    // quantize if needed
+    if let quantization {
+        quantize(model: model, groupSize: quantization.groupSize, bits: quantization.bits) {
+            path, module in
+            weights["\(path).scales"] != nil
+        }
+    }
+
+    // apply the loaded weights
+    let parameters = ModuleParameters.unflattened(weights)
+    // NOTE: removed verify: [.all] becuase Qwen models are not ready for that verification yet
+    try model.update(parameters: parameters, verify: [])
+
+    eval(model)
 }
