@@ -39,7 +39,7 @@ let weatherToolFunction = ToolFunction(
     ]
 )
 
-enum WeatherTool: Codable, Hashable {
+enum WeatherTool: Codable, CustomStringConvertible, Hashable {
     case getCurrentWeather(location: String, unit: WeatherUnit)
 
     private enum CodingKeys: String, CodingKey {
@@ -93,6 +93,13 @@ enum WeatherTool: Codable, Hashable {
                 "unit": unit.rawValue,
             ]
             try container.encode(arguments, forKey: .arguments)
+        }
+    }
+
+    var description: String {
+        switch self {
+        case let .getCurrentWeather(location, unit):
+            "getCurrentWeather(location: \(location), unit: \(unit))"
         }
     }
 }

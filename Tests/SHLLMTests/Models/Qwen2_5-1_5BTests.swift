@@ -41,6 +41,7 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
         unit: .fahrenheit
     )
 
+    print("\(#function) 1:", tool1)
     #expect(tool1 == expectedTool1)
 
     let tool2: WeatherTool = try await llm.request(
@@ -60,5 +61,6 @@ func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
         unit: .celsius
     )
 
+    print("\(#function) 2:", tool2)
     #expect(tool2 == expectedTool2)
 }
