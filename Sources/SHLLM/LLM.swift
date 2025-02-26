@@ -4,8 +4,8 @@ import struct Hub.Config
 import Metal
 import MLX
 import MLXLLM
-import MLXNN
 import MLXLMCommon
+import MLXNN
 import Tokenizers
 
 public final class LLM {
@@ -217,12 +217,14 @@ extension LLM {
 
 // FROM: https://github.com/ml-explore/mlx-swift-examples/blob/20701c0eeedd339ede4dd3b964152d814a3e9716/Libraries/MLXLMCommon/Load.swift#L61
 private func loadWeights(
-    modelDirectory: URL, model: LanguageModel, quantization: BaseConfiguration.Quantization? = nil
+    modelDirectory: URL, model: LanguageModel,
+    quantization: BaseConfiguration.Quantization? = nil
 ) throws {
     // load the weights
     var weights = [String: MLXArray]()
     let enumerator = FileManager.default.enumerator(
-        at: modelDirectory, includingPropertiesForKeys: nil)!
+        at: modelDirectory, includingPropertiesForKeys: nil
+    )!
     for case let url as URL in enumerator {
         if url.pathExtension == "safetensors" {
             let w = try loadArrays(url: url)
@@ -238,7 +240,7 @@ private func loadWeights(
     // quantize if needed
     if let quantization {
         quantize(model: model, groupSize: quantization.groupSize, bits: quantization.bits) {
-            path, module in
+            path, _ in
             weights["\(path).scales"] != nil
         }
     }

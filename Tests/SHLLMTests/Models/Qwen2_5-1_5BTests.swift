@@ -22,7 +22,7 @@ func canLoadAndQueryQwen2_5__1_5B() async throws {
 
 @Test
 func canHelpMeFetchTheWeather() async throws {
-    let llm = try await Qwen2_5__1_5B()
+    guard let llm = try await Qwen2_5__1_5B.tests else { return }
 
     let toolSpec: [String: any Sendable] = [
         "type": "function",
@@ -48,23 +48,29 @@ func canHelpMeFetchTheWeather() async throws {
 
     let result = try await llm.request(.init(
         messages: [
-            ["role": "system", "content": "You are weather fetching assistant. Your only purpose is to fetch weather data."],
+            [
+                "role": "system",
+                "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
+            ],
             ["role": "user", "content": "What is weather in Paris like?"],
         ],
         tools: [toolSpec]
     ))
 
     let expectedResult = """
-<tool_call>
-{"name": "get_current_weather", "arguments": {"location": "Paris, France", "unit": "fahrenheit"}}
-</tool_call>
-""".trimmingCharacters(in: .whitespacesAndNewlines)
+    <tool_call>
+    {"name": "get_current_weather", "arguments": {"location": "Paris, France", "unit": "fahrenheit"}}
+    </tool_call>
+    """.trimmingCharacters(in: .whitespacesAndNewlines)
 
     #expect(result == expectedResult)
 
     let result2 = try await llm.request(.init(
         messages: [
-            ["role": "system", "content": "You are weather fetching assistant. Your only purpose is to fetch weather data."],
+            [
+                "role": "system",
+                "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
+            ],
             ["role": "system", "content": "The user prefers Cº."],
             ["role": "user", "content": "What is weather in Paris like?"],
         ],
@@ -72,10 +78,10 @@ func canHelpMeFetchTheWeather() async throws {
     ))
 
     let expectedResult2 = """
-<tool_call>
-{"name": "get_current_weather", "arguments": {"location": "Paris, France", "unit": "celsius"}}
-</tool_call>
-""".trimmingCharacters(in: .whitespacesAndNewlines)
+    <tool_call>
+    {"name": "get_current_weather", "arguments": {"location": "Paris, France", "unit": "celsius"}}
+    </tool_call>
+    """.trimmingCharacters(in: .whitespacesAndNewlines)
 
     #expect(result2 == expectedResult2)
 }
