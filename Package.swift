@@ -35,13 +35,13 @@ let package = Package(
                     package: "swift-transformers",
                     moduleAliases: ["Models": "TransformersModels"]
                 ),
-            ]/*,
-              * Uncomment this line to load models for tests
-              *
-            resources: [
-                .copy("Resources/gemma-2-2b-it-4bit"),
+            ],
+//            resources: [
+//                .copy("Resources/gemma-2-2b-it-4bit"),
+//            ],
+            linkerSettings: [
+                .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
             ]
-              */
         ),
         .testTarget(
             name: "SHLLMTests",

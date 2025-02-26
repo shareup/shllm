@@ -4,6 +4,7 @@ public actor OpenELM: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
+        try LLM.assertSupportedDevice
         let llm = try await LLM.openELM(directory: directory)
         self.llm = .init(llm)
     }

@@ -4,6 +4,7 @@ public actor Phi3: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
+        try LLM.assertSupportedDevice
         let llm = try await LLM.phi3(directory: directory)
         self.llm = .init(llm)
     }

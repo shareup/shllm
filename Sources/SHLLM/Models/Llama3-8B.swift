@@ -4,6 +4,7 @@ public actor Llama3_8B: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
+        try LLM.assertSupportedDevice
         let llm = try await LLM.llama(directory: directory)
         self.llm = .init(llm)
     }

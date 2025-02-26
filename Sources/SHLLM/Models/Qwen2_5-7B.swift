@@ -4,6 +4,7 @@ public actor Qwen2_5__7B: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
+        try LLM.assertSupportedDevice
         let llm = try await LLM.qwen2(directory: directory)
         self.llm = .init(llm)
     }

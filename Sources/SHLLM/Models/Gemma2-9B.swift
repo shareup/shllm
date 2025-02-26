@@ -4,6 +4,7 @@ public actor Gemma2_9B: ModelProtocol {
     public let llm: AsyncLockedValue<LLM>
 
     public init(directory: URL) async throws {
+        try LLM.assertSupportedDevice
         let llm = try await LLM.gemma2(directory: directory)
         self.llm = .init(llm)
     }
