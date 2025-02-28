@@ -35,10 +35,10 @@ func canHelpMeFetchTheWeatherWithQwen2_5__7B() async throws {
         ]
     )
 
-    let expectedTool1 = WeatherTool.getCurrentWeather(
+    let expectedTool1 = WeatherTool.getCurrentWeather(.init(
         location: "Paris, France",
         unit: .fahrenheit
-    )
+    ))
 
     print("\(#function) 1:", tool1)
     #expect(tool1 == expectedTool1)
@@ -55,10 +55,10 @@ func canHelpMeFetchTheWeatherWithQwen2_5__7B() async throws {
         ]
     )
 
-    let expectedTool2 = WeatherTool.getCurrentWeather(
+    let expectedTool2 = WeatherTool.getCurrentWeather(.init(
         location: "Paris, France",
         unit: .celsius
-    )
+    ))
 
     print("\(#function) 2:", tool2)
     #expect(tool2 == expectedTool2)

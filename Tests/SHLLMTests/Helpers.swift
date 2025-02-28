@@ -40,7 +40,7 @@ let weatherToolFunction = ToolFunction(
 )
 
 enum WeatherTool: Codable, CustomStringConvertible, Hashable {
-    case getCurrentWeather(location: String, unit: WeatherUnit)
+    case getCurrentWeather(GetCurrentWeatherArguments)
 
     private enum CodingKeys: String, CodingKey {
         case name
@@ -50,29 +50,14 @@ enum WeatherTool: Codable, CustomStringConvertible, Hashable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let toolName = try container.decode(String.self, forKey: .name)
-        let arguments = try container.decode([String: String].self, forKey: .arguments)
 
         switch toolName {
         case "get_current_weather":
-            guard let location = arguments["location"] else {
-                throw DecodingError.keyNotFound(
-                    CodingKeys.arguments,
-                    DecodingError.Context(
-                        codingPath: [CodingKeys.arguments],
-                        debugDescription: "Missing 'location' key"
-                    )
-                )
-            }
-            guard let unitString = arguments["unit"],
-                  let unit = WeatherUnit(rawValue: unitString)
-            else {
-                throw DecodingError.dataCorruptedError(
-                    forKey: CodingKeys.arguments,
-                    in: container,
-                    debugDescription: "Missing or invalid 'unit' key"
-                )
-            }
-            self = .getCurrentWeather(location: location, unit: unit)
+            let args = try container.decode(
+                GetCurrentWeatherArguments.self,
+                forKey: .arguments
+            )
+            self = .getCurrentWeather(args)
 
         default:
             throw DecodingError.dataCorruptedError(
@@ -86,25 +71,42 @@ enum WeatherTool: Codable, CustomStringConvertible, Hashable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-        case let .getCurrentWeather(location, unit):
+        case let .getCurrentWeather(args):
             try container.encode("getCurrentWeather", forKey: .name)
-            let arguments: [String: String] = [
-                "location": location,
-                "unit": unit.rawValue,
-            ]
-            try container.encode(arguments, forKey: .arguments)
+            try container.encode(args, forKey: .arguments)
         }
     }
 
     var description: String {
         switch self {
-        case let .getCurrentWeather(location, unit):
-            "getCurrentWeather(location: \(location), unit: \(unit))"
+        case let .getCurrentWeather(args):
+            "getCurrentWeather(\(args))"
         }
     }
 }
 
-enum WeatherUnit: String, Codable {
+struct GetCurrentWeatherArguments: Codable, CustomStringConvertible, Hashable, Sendable {
+    var location: String
+    var unit: WeatherUnit
+
+    init(location: String, unit: WeatherUnit) {
+        self.location = location
+        self.unit = unit
+    }
+
+    var description: String {
+        "'\(location)', '\(unit)'"
+    }
+}
+
+enum WeatherUnit: String, Codable, CustomStringConvertible {
     case celsius
     case fahrenheit
+
+    var description: String {
+        switch self {
+        case .celsius: "Celsius"
+        case .fahrenheit: "Fahrenheit"
+        }
+    }
 }
