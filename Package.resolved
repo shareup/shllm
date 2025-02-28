@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/shareup/mlx-swift-examples",
       "state" : {
-        "revision" : "20701c0eeedd339ede4dd3b964152d814a3e9716",
-        "version" : "0.0.1"
+        "revision" : "0c50f71e1a3fcaaf09d1f93721a55e4f291bc442",
+        "version" : "0.0.2"
       }
     },
     {

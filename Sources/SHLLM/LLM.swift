@@ -193,6 +193,31 @@ public final class LLM {
 }
 
 extension LLM {
+    func request<T: Codable>(
+        tools: Tools,
+        messages: [Message],
+        maxTokenCount: Int = 1024 * 1024
+    ) async throws -> T {
+        let result = try await request(
+            .init(messages: messages, tools: tools.toSpec()),
+            maxTokenCount: maxTokenCount
+        )
+
+        let decoder = JSONDecoder()
+
+        return try decoder.decode(
+            T.self,
+            from: Data(result.trimmingToolCallMarkup().utf8)
+        )
+    }
+
+    func request(
+        messages: [Message],
+        maxTokenCount: Int = 1024 * 1024
+    ) async throws -> String {
+        try await request(.init(messages: messages), maxTokenCount: maxTokenCount)
+    }
+
     func request(
         _ input: UserInput,
         maxTokenCount: Int = 1024 * 1024
@@ -215,40 +240,14 @@ extension LLM {
     }
 }
 
-// FROM: https://github.com/ml-explore/mlx-swift-examples/blob/20701c0eeedd339ede4dd3b964152d814a3e9716/Libraries/MLXLMCommon/Load.swift#L61
-private func loadWeights(
-    modelDirectory: URL, model: LanguageModel,
-    quantization: BaseConfiguration.Quantization? = nil
-) throws {
-    // load the weights
-    var weights = [String: MLXArray]()
-    let enumerator = FileManager.default.enumerator(
-        at: modelDirectory, includingPropertiesForKeys: nil
-    )!
-    for case let url as URL in enumerator {
-        if url.pathExtension == "safetensors" {
-            let w = try loadArrays(url: url)
-            for (key, value) in w {
-                weights[key] = value
-            }
-        }
+private extension String {
+    func trimmingToolCallMarkup() -> String {
+        let prefix = "<tool_call>\n"
+        let suffix = "\n</tool_call>"
+
+        var copy = trimmingCharacters(in: .whitespacesAndNewlines)
+        copy.removeFirst(prefix.count)
+        copy.removeLast(suffix.count)
+        return copy
     }
-
-    // per-model cleanup
-    weights = model.sanitize(weights: weights)
-
-    // quantize if needed
-    if let quantization {
-        quantize(model: model, groupSize: quantization.groupSize, bits: quantization.bits) {
-            path, _ in
-            weights["\(path).scales"] != nil
-        }
-    }
-
-    // apply the loaded weights
-    let parameters = ModuleParameters.unflattened(weights)
-    // NOTE: removed verify: [.all] becuase Qwen models are not ready for that verification yet
-    try model.update(parameters: parameters, verify: [])
-
-    eval(model)
 }
