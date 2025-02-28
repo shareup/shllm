@@ -37,7 +37,7 @@ func canHelpMeFetchTheWeatherWithQwen2_5__7B() async throws {
 
     let expectedTool1 = WeatherTool.getCurrentWeather(.init(
         location: "Paris, France",
-        unit: .fahrenheit
+        unit: .celsius
     ))
 
     print("\(#function) 1:", tool1)
@@ -50,14 +50,14 @@ func canHelpMeFetchTheWeatherWithQwen2_5__7B() async throws {
                 "role": "system",
                 "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
             ],
-            ["role": "system", "content": "The user prefers C°."],
+            ["role": "system", "content": "The user prefers F°."],
             ["role": "user", "content": "What is weather in Paris like?"],
         ]
     )
 
     let expectedTool2 = WeatherTool.getCurrentWeather(.init(
         location: "Paris, France",
-        unit: .celsius
+        unit: .fahrenheit
     ))
 
     print("\(#function) 2:", tool2)
