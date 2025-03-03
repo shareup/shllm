@@ -1,6 +1,9 @@
 import Foundation
 import MLXLMCommon
 
+public typealias Message = MLXLMCommon.Message
+public typealias UserInput = MLXLMCommon.UserInput
+
 public protocol ModelProtocol {
     var llm: AsyncLockedValue<LLM> { get async }
 }
