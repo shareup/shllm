@@ -9,6 +9,10 @@ import MLXNN
 import Tokenizers
 
 public final class LLM {
+    public static func clearCache() {
+        MLX.GPU.clearCache()
+    }
+
     public static var isSupportedDevice: Bool {
         guard let _ = MTLCreateSystemDefaultDevice() else {
             return false
