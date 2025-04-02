@@ -9,7 +9,8 @@ extension Mistral7B: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Mistral7BTests {
+@Suite(.serialized)
+struct Mistral7BTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Mistral7B.tests else { return }

@@ -9,7 +9,8 @@ extension OpenELM: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct OpenELMTests {
+@Suite(.serialized)
+struct OpenELMTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await OpenELM.tests else { return }

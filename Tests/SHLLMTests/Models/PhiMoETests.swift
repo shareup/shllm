@@ -9,7 +9,8 @@ extension PhiMoE: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct PhiMoETests {
+@Suite(.serialized)
+struct PhiMoETests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await PhiMoE.tests else { return }

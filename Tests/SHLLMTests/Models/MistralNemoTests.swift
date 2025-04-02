@@ -9,7 +9,8 @@ extension MistralNemo: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct MistralNemoTests {
+@Suite(.serialized)
+struct MistralNemoTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await MistralNemo.tests else { return }

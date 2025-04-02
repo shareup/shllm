@@ -10,7 +10,8 @@ extension DeepSeekR1: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct DeepSeekR1Tests {
+@Suite(.serialized)
+struct DeepSeekR1Tests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await DeepSeekR1.tests else { return }

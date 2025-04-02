@@ -9,7 +9,8 @@ extension Gemma2_2B: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Gemma2_2BTests {
+@Suite(.serialized)
+struct Gemma2_2BTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Gemma2_2B.tests else { return }

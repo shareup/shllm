@@ -8,7 +8,9 @@ extension Gemma: InitializableWithDirectory {
         }
     }
 }
-@Suite(.serialized) struct GemmaTests {
+
+@Suite(.serialized)
+struct GemmaTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Gemma.tests else { return }

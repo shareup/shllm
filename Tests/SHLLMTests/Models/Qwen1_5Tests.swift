@@ -9,7 +9,8 @@ extension Qwen1_5: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Qwen1_5Tests {
+@Suite(.serialized)
+struct Qwen1_5Tests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Qwen1_5.tests else { return }

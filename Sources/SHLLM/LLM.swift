@@ -32,93 +32,142 @@ public final class LLM {
     private let context: ModelContext
     private let configuration: ModelConfiguration
 
-    static func cohere(directory: URL) async throws -> LLM {
+    static func cohere(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: CohereModel.init
+            modelInit: CohereModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func gemma(directory: URL) async throws -> LLM {
+    static func gemma(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: GemmaModel.init
+            modelInit: GemmaModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func gemma2(directory: URL) async throws -> LLM {
+    static func gemma2(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: Gemma2Model.init
+            modelInit: Gemma2Model.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func internLM2(directory: URL) async throws -> LLM {
+    static func internLM2(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: InternLM2Model.init
+            modelInit: InternLM2Model.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func llama(directory: URL) async throws -> LLM {
+    static func llama(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: LlamaModel.init
+            modelInit: LlamaModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func openELM(directory: URL) async throws -> LLM {
+    static func openELM(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: OpenELMModel.init
+            modelInit: OpenELMModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func phi(directory: URL) async throws -> LLM {
+    static func phi(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: PhiModel.init
+            modelInit: PhiModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func phi3(directory: URL) async throws -> LLM {
+    static func phi3(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: Phi3Model.init
+            modelInit: Phi3Model.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func phiMoE(directory: URL) async throws -> LLM {
+    static func phiMoE(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: PhiMoEModel.init
+            modelInit: PhiMoEModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func qwen2(directory: URL) async throws -> LLM {
+    static func qwen2(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: Qwen2Model.init
+            modelInit: Qwen2Model.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func smolLM(directory: URL) async throws -> LLM {
+    static func smolLM(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: LlamaModel.init
+            modelInit: LlamaModel.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
-    static func starcoder2(directory: URL) async throws -> LLM {
+    static func starcoder2(
+        directory: URL,
+        maxInputTokenLength: Int? = nil
+    ) async throws -> LLM {
         try await Self(
             directory: directory,
-            modelInit: Starcoder2Model.init
+            modelInit: Starcoder2Model.init,
+            maxInputTokenLength: maxInputTokenLength
         )
     }
 
     private init<Configuration: Decodable>(
         directory: URL,
-        modelInit: (Configuration) -> some LanguageModel
+        modelInit: (Configuration) -> some LanguageModel,
+        maxInputTokenLength: Int? = nil
     ) async throws {
         self.directory = directory
         let decoder = JSONDecoder()
@@ -189,7 +238,8 @@ public final class LLM {
             model: model,
             processor: LLMUserInputProcessor(
                 tokenizer: tokenizer,
-                configuration: configuration
+                configuration: configuration,
+                maxInputTokenLength: maxInputTokenLength
             ),
             tokenizer: tokenizer
         )
@@ -200,11 +250,11 @@ extension LLM {
     func request<T: Codable>(
         tools: Tools,
         messages: [Message],
-        maxTokenCount: Int = 1024 * 1024
+        maxOutputTokenCount: Int = 1024 * 1024
     ) async throws -> T {
         let result = try await request(
             .init(messages: messages, tools: tools.toSpec()),
-            maxTokenCount: maxTokenCount
+            maxOutputTokenCount: maxOutputTokenCount
         )
         return try JSONDecoder().decode(
             T.self,
@@ -214,14 +264,17 @@ extension LLM {
 
     func request(
         messages: [Message],
-        maxTokenCount: Int = 1024 * 1024
+        maxOutputTokenCount: Int = 1024 * 1024
     ) async throws -> String {
-        try await request(.init(messages: messages), maxTokenCount: maxTokenCount)
+        try await request(
+            .init(messages: messages),
+            maxOutputTokenCount: maxOutputTokenCount
+        )
     }
 
     func request(
         _ input: UserInput,
-        maxTokenCount: Int = 1024 * 1024
+        maxOutputTokenCount: Int = 1024 * 1024
     ) async throws -> String {
         let input = try await context.processor.prepare(input: input)
 
@@ -230,7 +283,7 @@ extension LLM {
             parameters: .init(),
             context: context
         ) { tokens in
-            if tokens.count >= maxTokenCount {
+            if tokens.count >= maxOutputTokenCount {
                 .stop
             } else {
                 .more

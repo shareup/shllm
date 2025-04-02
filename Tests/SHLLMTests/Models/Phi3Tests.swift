@@ -9,7 +9,8 @@ extension Phi3: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Phi3Tests {
+@Suite(.serialized)
+struct Phi3Tests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Phi3.tests else { return }

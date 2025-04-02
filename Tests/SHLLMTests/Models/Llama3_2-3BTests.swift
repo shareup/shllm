@@ -9,7 +9,8 @@ extension Llama3_2__3B: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Llama3_2__3BTests {
+@Suite(.serialized)
+struct Llama3_2__3BTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Llama3_2__3B.tests else { return }

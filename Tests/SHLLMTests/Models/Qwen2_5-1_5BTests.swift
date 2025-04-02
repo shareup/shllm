@@ -10,7 +10,8 @@ extension Qwen2_5__1_5B: InitializableWithDirectory {
     }
 }
 
-@Suite(.serialized) struct Qwen2_5__1_5BTests {
+@Suite(.serialized)
+struct Qwen2_5__1_5BTests {
     @Test
     func canLoadAndQuery() async throws {
         guard let llm = try await Qwen2_5__1_5B.tests else { return }
@@ -21,11 +22,11 @@ extension Qwen2_5__1_5B: InitializableWithDirectory {
         Swift.print(result)
         #expect(!result.isEmpty)
     }
-    
+
     @Test
     func canHelpMeFetchTheWeather() async throws {
         guard let llm = try await Qwen2_5__1_5B.tests else { return }
-        
+
         let tool1: WeatherTool = try await llm.request(
             tools: Tools([weatherToolFunction]),
             messages: [
@@ -36,15 +37,15 @@ extension Qwen2_5__1_5B: InitializableWithDirectory {
                 ["role": "user", "content": "What is weather in Paris like?"],
             ]
         )
-        
+
         let expectedTool1 = WeatherTool.getCurrentWeather(.init(
             location: "Paris, France",
             unit: .fahrenheit
         ))
-        
+
         print("\(#function) 1:", tool1)
         #expect(tool1 == expectedTool1)
-        
+
         let tool2: WeatherTool = try await llm.request(
             tools: Tools([weatherToolFunction]),
             messages: [
@@ -56,12 +57,12 @@ extension Qwen2_5__1_5B: InitializableWithDirectory {
                 ["role": "user", "content": "What is weather in Paris like?"],
             ]
         )
-        
+
         let expectedTool2 = WeatherTool.getCurrentWeather(.init(
             location: "Paris, France",
             unit: .celsius
         ))
-        
+
         print("\(#function) 2:", tool2)
         #expect(tool2 == expectedTool2)
     }
