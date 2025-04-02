@@ -14,11 +14,11 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.2"
+            from: "0.0.4"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
-            from: "0.1.17"
+            from: "0.1.18"
         ),
     ],
     targets: [
@@ -33,16 +33,18 @@ let package = Package(
                     moduleAliases: ["Models": "TransformersModels"]
                 ),
             ],
-//            resources: [
-//                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
-//                .copy("Resources/gemma-2-2b-it-4bit"),
+            resources: [
+                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
+                .copy("Resources/gemma-2-2b-it-4bit"),
+                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
+                .copy("Resources/Llama-3.2-3B-Instruct-4bit"),
 //                .copy("Resources/OpenELM-270M-Instruct"),
-//                .copy("Resources/Phi-3.5-mini-instruct-4bit"),
+                .copy("Resources/Phi-3.5-mini-instruct-4bit"),
 //                .copy("Resources/Phi-3.5-MoE-instruct-4bit"),
 //                .copy("Resources/Qwen1.5-0.5B-Chat-4bit"),
-//                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
-//                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
-//            ],
+                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
+                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
+            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
             ]

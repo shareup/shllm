@@ -206,10 +206,7 @@ extension LLM {
             .init(messages: messages, tools: tools.toSpec()),
             maxTokenCount: maxTokenCount
         )
-
-        let decoder = JSONDecoder()
-
-        return try decoder.decode(
+        return try JSONDecoder().decode(
             T.self,
             from: Data(result.trimmingToolCallMarkup().utf8)
         )
@@ -246,12 +243,13 @@ extension LLM {
 
 private extension String {
     func trimmingToolCallMarkup() -> String {
-        let prefix = "<tool_call>\n"
-        let suffix = "\n</tool_call>"
+        let prefix = "<tool_call>"
+        let suffix = "</tool_call>"
 
-        var copy = trimmingCharacters(in: .whitespacesAndNewlines)
+        let whitespace = CharacterSet.whitespacesAndNewlines
+        var copy = trimmingCharacters(in: whitespace)
         copy.removeFirst(prefix.count)
         copy.removeLast(suffix.count)
-        return copy
+        return copy.trimmingCharacters(in: whitespace)
     }
 }
