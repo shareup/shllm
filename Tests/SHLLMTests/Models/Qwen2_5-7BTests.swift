@@ -45,6 +45,7 @@ struct Qwen2_5__7BTests {
                         "role": "system",
                         "content": "You are a weather fetching assistant. Your only purpose is to fetch weather data.",
                     ],
+                    ["role": "system", "content": "The user prefers F°."],
                     ["role": "user", "content": "What is weather in Paris like?"],
                 ],
                 tools: Tools([weatherToolFunction]).toSpec()
