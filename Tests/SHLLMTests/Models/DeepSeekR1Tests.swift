@@ -2,24 +2,47 @@ import Foundation
 @testable import SHLLM
 import Testing
 
-extension DeepSeekR1: InitializableWithDirectory {
-    static var tests: Self? {
-        get async throws {
-            try await loadModel(from: bundleDirectory)
-        }
-    }
-}
-
 @Suite(.serialized)
 struct DeepSeekR1Tests {
     @Test
-    func canLoadAndQuery() async throws {
-        guard let llm = try await DeepSeekR1.tests else { return }
-        let result = try await llm.request(.init(messages: [
+    func canStreamResult() async throws {
+        let input: UserInput = .init(messages: [
             ["role": "system", "content": "You are a helpful assistant."],
             ["role": "user", "content": "What is the meaning of life?"],
-        ]))
+        ])
+
+        guard let llm = try deepSeekR1(input) else { return }
+
+        var result = ""
+        for try await reply in llm {
+            result.append(reply)
+        }
+
         Swift.print(result)
         #expect(!result.isEmpty)
     }
+
+    @Test
+    func canAwaitResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try deepSeekR1(input) else { return }
+
+        let result = try await llm.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+}
+
+private func deepSeekR1(
+    _ input: UserInput
+) throws -> LLM<Qwen2Configuration, Qwen2Model>? {
+    try loadModel(
+        LLM.deepSeekR1,
+        directory: LLM.deepSeekR1,
+        input: input
+    )
 }

@@ -6,16 +6,16 @@ import Tokenizers
 struct LLMUserInputProcessor: UserInputProcessor {
     private let tokenizer: Tokenizer
     private let configuration: ModelConfiguration
-    private let maxInputTokenLength: Int?
+    private let maxInputTokenCount: Int?
 
     init(
         tokenizer: any Tokenizer,
         configuration: ModelConfiguration,
-        maxInputTokenLength: Int? = nil
+        maxInputTokenCount: Int? = nil
     ) {
         self.tokenizer = tokenizer
         self.configuration = configuration
-        self.maxInputTokenLength = maxInputTokenLength
+        self.maxInputTokenCount = maxInputTokenCount
     }
 
     func prepare(input: UserInput) throws -> LMInput {
@@ -25,8 +25,8 @@ struct LLMUserInputProcessor: UserInputProcessor {
                 messages: messages,
                 chatTemplate: nil,
                 addGenerationPrompt: true,
-                truncation: maxInputTokenLength != nil,
-                maxLength: maxInputTokenLength,
+                truncation: maxInputTokenCount != nil,
+                maxLength: maxInputTokenCount,
                 tools: input.tools,
                 additionalContext: input.additionalContext
             )
