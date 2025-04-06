@@ -1,21 +1,48 @@
+import Foundation
 @testable import SHLLM
 import Testing
 
-extension Mistral7B: InitializableWithDirectory {
-    static var tests: Self? {
-        get async throws {
-            try await loadModel(from: bundleDirectory)
+@Suite(.serialized)
+struct Mistral7BTests {
+    @Test
+    func canStreamResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try mistral7B(input) else { return }
+
+        var result = ""
+        for try await reply in llm {
+            result.append(reply)
         }
+
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canAwaitResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try mistral7B(input) else { return }
+
+        let result = try await llm.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
     }
 }
 
-@Test
-func canLoadAndQueryMistral7B() async throws {
-    guard let llm = try await Mistral7B.tests else { return }
-    let result = try await llm.request(.init(messages: [
-        ["role": "system", "content": "You are a helpful assistant."],
-        ["role": "user", "content": "What is the meaning of life?"],
-    ]))
-    Swift.print(result)
-    #expect(!result.isEmpty)
+private func mistral7B(
+    _ input: UserInput
+) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+    try loadModel(
+        LLM.mistral7B,
+        directory: LLM.mistral7B,
+        input: input
+    )
 }

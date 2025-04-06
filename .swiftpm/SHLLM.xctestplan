@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "969D97BC-F3FD-4760-85BF-CF03DC595B1D",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SHLLMTests",
+        "name" : "SHLLMTests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -2,65 +2,100 @@ import Foundation
 @testable import SHLLM
 import Testing
 
-extension Qwen2_5__1_5B: InitializableWithDirectory {
-    static var tests: Self? {
-        get async throws {
-            try await loadModel(from: bundleDirectory)
+@Suite(.serialized)
+struct Qwen2_5__1_5BTests {
+    @Test
+    func canStreamResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try qwen2_5__1_5B(input) else { return }
+
+        var result = ""
+        for try await reply in llm {
+            result.append(reply)
+        }
+
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canAwaitResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try qwen2_5__1_5B(input) else { return }
+
+        let result = try await llm.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canFetchTheWeather() async throws {
+        do {
+            let input: UserInput = .init(
+                messages: [
+                    [
+                        "role": "system",
+                        "content": "You are a weather fetching assistant. Your only purpose is to fetch weather data.",
+                    ],
+                    ["role": "system", "content": "The user prefers F°."],
+                    ["role": "user", "content": "What is weather in Paris like?"],
+                ],
+                tools: Tools([weatherToolFunction]).toSpec()
+            )
+
+            guard let llm = try qwen2_5__1_5B(input) else { return }
+
+            let tool: WeatherTool = try await llm.toolResult()
+            let expectedTool = WeatherTool.getCurrentWeather(.init(
+                location: "Paris, France",
+                unit: .fahrenheit
+            ))
+
+            print("\(#function) 1:", tool)
+            #expect(tool == expectedTool)
+        }
+
+        do {
+            let input: UserInput = .init(
+                messages: [
+                    [
+                        "role": "system",
+                        "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
+                    ],
+                    ["role": "system", "content": "The user prefers C°."],
+                    ["role": "user", "content": "What is weather in Paris like?"],
+                ],
+                tools: Tools([weatherToolFunction]).toSpec()
+            )
+
+            guard let llm = try qwen2_5__1_5B(input) else { return }
+
+            let tool: WeatherTool = try await llm.toolResult()
+            let expectedTool = WeatherTool.getCurrentWeather(.init(
+                location: "Paris, France",
+                unit: .celsius
+            ))
+
+            print("\(#function) 2:", tool)
+            #expect(tool == expectedTool)
         }
     }
 }
 
-@Test
-func canLoadAndQueryQwen2_5__1_5B() async throws {
-    guard let llm = try await Qwen2_5__1_5B.tests else { return }
-    let result = try await llm.request(.init(messages: [
-        ["role": "system", "content": "You are a helpful assistant."],
-        ["role": "user", "content": "What is the meaning of life?"],
-    ]))
-    Swift.print(result)
-    #expect(!result.isEmpty)
-}
-
-@Test
-func canHelpMeFetchTheWeatherWithQwen2_5__1_5B() async throws {
-    guard let llm = try await Qwen2_5__1_5B.tests else { return }
-
-    let tool1: WeatherTool = try await llm.request(
-        tools: Tools([weatherToolFunction]),
-        messages: [
-            [
-                "role": "system",
-                "content": "You are a weather fetching assistant. Your only purpose is to fetch weather data.",
-            ],
-            ["role": "user", "content": "What is weather in Paris like?"],
-        ]
+private func qwen2_5__1_5B(
+    _ input: UserInput
+) throws -> LLM<Qwen2Configuration, Qwen2Model>? {
+    try loadModel(
+        LLM.qwen2_5__1_5B,
+        directory: LLM.qwen2_5__1_5B,
+        input: input
     )
-
-    let expectedTool1 = WeatherTool.getCurrentWeather(.init(
-        location: "Paris, France",
-        unit: .fahrenheit
-    ))
-
-    print("\(#function) 1:", tool1)
-    #expect(tool1 == expectedTool1)
-
-    let tool2: WeatherTool = try await llm.request(
-        tools: Tools([weatherToolFunction]),
-        messages: [
-            [
-                "role": "system",
-                "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
-            ],
-            ["role": "system", "content": "The user prefers C°."],
-            ["role": "user", "content": "What is weather in Paris like?"],
-        ]
-    )
-
-    let expectedTool2 = WeatherTool.getCurrentWeather(.init(
-        location: "Paris, France",
-        unit: .celsius
-    ))
-
-    print("\(#function) 2:", tool2)
-    #expect(tool2 == expectedTool2)
 }
