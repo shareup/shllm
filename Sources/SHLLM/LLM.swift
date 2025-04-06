@@ -242,8 +242,8 @@ public struct LLM<
 
 // MARK: - DeepSeek R1
 
-public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Model {
-    static func deepSeekR1(
+extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Model {
+    public static func deepSeekR1(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -269,8 +269,8 @@ public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Mo
 
 // MARK: - Gemma
 
-public extension LLM where Configuration == GemmaConfiguration, Model == GemmaModel {
-    static func gemma(
+extension LLM where Configuration == GemmaConfiguration, Model == GemmaModel {
+    public static func gemma(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -296,8 +296,8 @@ public extension LLM where Configuration == GemmaConfiguration, Model == GemmaMo
 
 // MARK: - Gemma 2
 
-public extension LLM where Configuration == Gemma2Configuration, Model == Gemma2Model {
-    static func gemma2_2B(
+extension LLM where Configuration == Gemma2Configuration, Model == Gemma2Model {
+    public static func gemma2_2B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -320,7 +320,7 @@ public extension LLM where Configuration == Gemma2Configuration, Model == Gemma2
         }
     }
 
-    static func gemma2_9B(
+    public static func gemma2_9B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -346,8 +346,8 @@ public extension LLM where Configuration == Gemma2Configuration, Model == Gemma2
 
 // MARK: - Llama
 
-public extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
-    static func codeLlama(
+extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
+    public static func codeLlama(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -370,7 +370,7 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
         }
     }
 
-    static func llama3_8B(
+    public static func llama3_8B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -393,7 +393,7 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
         }
     }
 
-    static func llama3_1__8B(
+    public static func llama3_1__8B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -416,7 +416,7 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
         }
     }
 
-    static func llama3_2__1B(
+    public static func llama3_2__1B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -439,7 +439,7 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
         }
     }
 
-    static func llama3_2__3B(
+    public static func llama3_2__3B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -465,8 +465,8 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
 
 // MARK: - Mistral
 
-public extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
-    static func mistral7B(
+extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
+    public static func mistral7B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -489,7 +489,7 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
         }
     }
 
-    static func mistralNemo(
+    public static func mistralNemo(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -515,8 +515,8 @@ public extension LLM where Configuration == LlamaConfiguration, Model == LlamaMo
 
 // MARK: - OpenELM
 
-public extension LLM where Configuration == OpenElmConfiguration, Model == OpenELMModel {
-    static func openELM(
+extension LLM where Configuration == OpenElmConfiguration, Model == OpenELMModel {
+    public static func openELM(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -542,8 +542,8 @@ public extension LLM where Configuration == OpenElmConfiguration, Model == OpenE
 
 // MARK: - Phi
 
-public extension LLM where Configuration == PhiConfiguration, Model == PhiModel {
-    static func phi2(
+extension LLM where Configuration == PhiConfiguration, Model == PhiModel {
+    public static func phi2(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -569,8 +569,8 @@ public extension LLM where Configuration == PhiConfiguration, Model == PhiModel 
 
 // MARK: - Phi 3
 
-public extension LLM where Configuration == Phi3Configuration, Model == Phi3Model {
-    static func phi3(
+extension LLM where Configuration == Phi3Configuration, Model == Phi3Model {
+    public static func phi3(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -596,8 +596,8 @@ public extension LLM where Configuration == Phi3Configuration, Model == Phi3Mode
 
 // MARK: - Phi MoE
 
-public extension LLM where Configuration == PhiMoEConfiguration, Model == PhiMoEModel {
-    static func phiMoE(
+extension LLM where Configuration == PhiMoEConfiguration, Model == PhiMoEModel {
+    public static func phiMoE(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -623,8 +623,8 @@ public extension LLM where Configuration == PhiMoEConfiguration, Model == PhiMoE
 
 // MARK: - Qwen
 
-public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Model {
-    static func qwen1_5(
+extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Model {
+    public static func qwen1_5(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -647,7 +647,7 @@ public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Mo
         }
     }
 
-    static func qwen2_5__1_5B(
+    public static func qwen2_5__1_5B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -670,7 +670,7 @@ public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Mo
         }
     }
 
-    static func qwen2_5__7B(
+    public static func qwen2_5__7B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -696,8 +696,8 @@ public extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Mo
 
 // MARK: - Smol
 
-public extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
-    static func smolLM(
+extension LLM where Configuration == LlamaConfiguration, Model == LlamaModel {
+    public static func smolLM(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
