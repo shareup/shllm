@@ -37,7 +37,7 @@ let package = Package(
                     moduleAliases: ["Models": "TransformersModels"]
                 ),
             ],
-            resources: [
+//            resources: [
 //                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
 //                .copy("Resources/gemma-2-2b-it-4bit"),
 //                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
@@ -50,7 +50,7 @@ let package = Package(
 //                .copy("Resources/Qwen1.5-0.5B-Chat-4bit"),
 //                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
 //                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
-            ],
+//            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
             ]

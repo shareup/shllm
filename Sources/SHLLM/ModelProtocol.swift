@@ -50,8 +50,15 @@ private extension String {
 
         let whitespace = CharacterSet.whitespacesAndNewlines
         var copy = trimmingCharacters(in: whitespace)
-        copy.removeFirst(prefix.count)
-        copy.removeLast(suffix.count)
+
+        if copy.hasPrefix(prefix) {
+            copy.removeFirst(prefix.count)
+        }
+
+        if copy.hasSuffix(suffix) {
+            copy.removeLast(suffix.count)
+        }
+
         return copy.trimmingCharacters(in: whitespace)
     }
 }
