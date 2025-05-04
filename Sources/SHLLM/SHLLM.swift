@@ -27,6 +27,12 @@ public enum SHLLM {
 @_exported import struct MLXLLM.Qwen2Configuration
 @_exported import class MLXLLM.Qwen2Model
 
+@_exported import struct MLXLLM.Qwen3Configuration
+@_exported import class MLXLLM.Qwen3Model
+
+@_exported import struct MLXLLM.Qwen3MoEConfiguration
+@_exported import class MLXLLM.Qwen3MoEModel
+
 @_exported import struct MLXLLM.GemmaConfiguration
 @_exported import class MLXLLM.GemmaModel
 

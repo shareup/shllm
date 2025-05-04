@@ -38,27 +38,31 @@ public extension ModelProtocol {
 
     func toolResult<T: Codable>() async throws -> T {
         let decoder = JSONDecoder()
-        let result = try await result.trimmingToolCallMarkup()
+        let result = try await result.toolCall()
         return try decoder.decode(T.self, from: Data(result.utf8))
     }
 }
 
 private extension String {
-    func trimmingToolCallMarkup() -> String {
+    func toolCall() -> String {
         let prefix = "<tool_call>"
         let suffix = "</tool_call>"
 
+        let startIndex = ranges(of: prefix).last?.lowerBound ?? startIndex
+        let endIndex = ranges(of: suffix).last?.upperBound ?? endIndex
+
         let whitespace = CharacterSet.whitespacesAndNewlines
-        var copy = trimmingCharacters(in: whitespace)
+        var result = self[startIndex ..< endIndex]
+            .trimmingCharacters(in: whitespace)
 
-        if copy.hasPrefix(prefix) {
-            copy.removeFirst(prefix.count)
+        if result.hasPrefix(prefix) {
+            result.removeFirst(prefix.count)
         }
 
-        if copy.hasSuffix(suffix) {
-            copy.removeLast(suffix.count)
+        if result.hasSuffix(suffix) {
+            result.removeLast(suffix.count)
         }
 
-        return copy.trimmingCharacters(in: whitespace)
+        return result.trimmingCharacters(in: whitespace)
     }
 }
