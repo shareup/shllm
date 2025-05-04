@@ -58,7 +58,6 @@ public struct LLM<
             case streaming(
                 AsyncStream<Generation>,
                 AsyncStream<Generation>.AsyncIterator,
-                NaiveStreamingDetokenizer,
                 Int
             )
             case failed(Error)
@@ -147,6 +146,7 @@ public struct LLM<
                     processor: LLMUserInputProcessor(
                         tokenizer: tokenizer,
                         configuration: configuration,
+                        messageGenerator: DefaultMessageGenerator(),
                         maxInputTokenCount: maxInputTokenCount
                     ),
                     tokenizer: tokenizer
@@ -169,9 +169,6 @@ public struct LLM<
                 )
 
                 var iterator = stream.makeAsyncIterator()
-                var detokenizer = NaiveStreamingDetokenizer(
-                    tokenizer: context.tokenizer
-                )
                 var tokenCount = 0
 
                 repeat {
@@ -180,22 +177,24 @@ public struct LLM<
                         return nil
                     }
 
-                    guard case let .token(token) = await iterator.next() else {
+                    guard let next = await iterator.next() else {
                         state = .finished
                         return nil
                     }
 
-                    tokenCount += 1
-                    detokenizer.append(token: token)
-
-                    if let output = detokenizer.next() {
+                    switch next {
+                    case let .chunk(chunk):
+                        tokenCount += 1
                         state = .streaming(
                             stream,
                             iterator,
-                            detokenizer,
                             tokenCount
                         )
-                        return output
+                        return chunk
+
+                    case .info:
+                        state = .finished
+                        return nil
                     }
                 } while true
 
@@ -208,7 +207,6 @@ public struct LLM<
             case .streaming(
                 let stream,
                 var iterator,
-                var detokenizer,
                 var tokenCount
             ):
                 repeat {
@@ -217,22 +215,24 @@ public struct LLM<
                         return nil
                     }
 
-                    guard case let .token(token) = await iterator.next() else {
+                    guard let next = await iterator.next() else {
                         state = .finished
                         return nil
                     }
 
-                    tokenCount += 1
-                    detokenizer.append(token: token)
-
-                    if let output = detokenizer.next() {
+                    switch next {
+                    case let .chunk(chunk):
+                        tokenCount += 1
                         state = .streaming(
                             stream,
                             iterator,
-                            detokenizer,
                             tokenCount
                         )
-                        return output
+                        return chunk
+
+                    case .info:
+                        state = .finished
+                        return nil
                     }
                 } while true
             }
@@ -689,6 +689,121 @@ extension LLM where Configuration == Qwen2Configuration, Model == Qwen2Model {
     static var qwen2_5__7B: URL {
         get throws {
             let dir = "Qwen2.5-7B-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func qwen3__0_6B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Configuration, Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            modelInit: Qwen3Model.init,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var qwen3__0_6B: URL {
+        get throws {
+            let dir = "Qwen3-0.6B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func qwen3__1_7B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Configuration, Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            modelInit: Qwen3Model.init,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var qwen3__1_7B: URL {
+        get throws {
+            let dir = "Qwen3-1.7B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func qwen3_4B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Configuration, Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            modelInit: Qwen3Model.init,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var qwen3_4B: URL {
+        get throws {
+            let dir = "Qwen3-4B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func qwen3_8B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Configuration, Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            modelInit: Qwen3Model.init,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var qwen3_8B: URL {
+        get throws {
+            let dir = "Qwen3-8B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func qwen3_30B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3MoEConfiguration, Qwen3MoEModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            modelInit: Qwen3MoEModel.init,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var qwen3_30B: URL {
+        get throws {
+            let dir = "Qwen3-30B-A3B-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

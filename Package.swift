@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.5"
+            from: "0.0.6"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
-            from: "0.1.18"
+            from: "0.1.20"
         ),
     ],
     targets: [
@@ -50,6 +50,11 @@ let package = Package(
 //                .copy("Resources/Qwen1.5-0.5B-Chat-4bit"),
 //                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
 //                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
+//                .copy("Resources/Qwen3-0.6B-4bit"),
+//                .copy("Resources/Qwen3-1.7B-4bit"),
+//                .copy("Resources/Qwen3-4B-4bit"),
+//                .copy("Resources/Qwen3-8B-4bit"),
+//                .copy("Resources/Qwen3-30B-A3B-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
