@@ -24,6 +24,10 @@ public enum SHLLM {
     }
 }
 
+@_exported import enum MLXLMCommon.Chat
+@_exported import struct MLXLMCommon.Message
+@_exported import struct MLXLMCommon.UserInput
+
 @_exported import class MLXLLM.Gemma2Model
 @_exported import class MLXLLM.GemmaModel
 @_exported import class MLXLLM.LlamaModel

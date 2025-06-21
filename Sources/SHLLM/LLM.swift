@@ -13,15 +13,18 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
 
     private let directory: URL
     private let input: UserInput
+    private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
 
     public init(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) {
         self.directory = directory
         self.input = input
+        self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
     }
 
@@ -29,6 +32,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
         Self.AsyncIterator(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -36,6 +40,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
     public struct AsyncIterator: AsyncIteratorProtocol {
         private let directory: URL
         private let input: UserInput
+        private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
 
         private var state: State
@@ -55,10 +60,12 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
         fileprivate init(
             directory: URL,
             input: UserInput,
+            maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?
         ) {
             self.directory = directory
             self.input = input
+            self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
             state = .initial
         }
@@ -68,10 +75,17 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
             case .initial:
                 do {
                     let factory = try await loadModel(directory: directory)
+
+                    let wrappedProcessor = TruncatingUserInputProcessor(
+                        wrapping: factory.processor,
+                        tokenizer: factory.tokenizer,
+                        maxInputTokenCount: maxInputTokenCount
+                    )
+
                     let context = ModelContext(
                         configuration: factory.configuration,
                         model: factory.model,
-                        processor: factory.processor,
+                        processor: wrappedProcessor,
                         tokenizer: factory.tokenizer
                     )
                     state = .loaded(context)
@@ -167,12 +181,14 @@ extension LLM where Model == Qwen2Model {
     public static func deepSeekR1(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -191,12 +207,14 @@ extension LLM where Model == GemmaModel {
     public static func gemma(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<GemmaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -215,12 +233,14 @@ extension LLM where Model == Gemma2Model {
     public static func gemma2_2B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -235,12 +255,14 @@ extension LLM where Model == Gemma2Model {
     public static func gemma2_9B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -259,12 +281,14 @@ extension LLM where Model == LlamaModel {
     public static func codeLlama(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -279,12 +303,14 @@ extension LLM where Model == LlamaModel {
     public static func llama3_8B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -299,12 +325,14 @@ extension LLM where Model == LlamaModel {
     public static func llama3_1__8B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -319,12 +347,14 @@ extension LLM where Model == LlamaModel {
     public static func llama3_2__1B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -339,12 +369,14 @@ extension LLM where Model == LlamaModel {
     public static func llama3_2__3B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -363,12 +395,14 @@ extension LLM where Model == LlamaModel {
     public static func mistral7B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -383,12 +417,14 @@ extension LLM where Model == LlamaModel {
     public static func mistralNemo(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -407,12 +443,14 @@ extension LLM where Model == OpenELMModel {
     public static func openELM(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<OpenELMModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -431,12 +469,14 @@ extension LLM where Model == PhiModel {
     public static func phi2(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<PhiModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -455,12 +495,14 @@ extension LLM where Model == Phi3Model {
     public static func phi3(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Phi3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -479,12 +521,14 @@ extension LLM where Model == PhiMoEModel {
     public static func phiMoE(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<PhiMoEModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -503,12 +547,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen1_5(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -523,12 +569,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen2_5__1_5B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -543,12 +591,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen2_5__7B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -563,12 +613,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen3__0_6B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -583,12 +635,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen3__1_7B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -603,12 +657,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen3_4B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -623,12 +679,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen3_8B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -643,12 +701,14 @@ extension LLM where Model == Qwen2Model {
     public static func qwen3_30B(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3MoEModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }
@@ -667,12 +727,14 @@ extension LLM where Model == LlamaModel {
     public static func smolLM(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
+            maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
     }

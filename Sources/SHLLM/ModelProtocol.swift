@@ -2,13 +2,11 @@ import Combine
 import Foundation
 import MLXLMCommon
 
-public typealias Message = MLXLMCommon.Message
-public typealias UserInput = MLXLMCommon.UserInput
-
 public protocol ModelProtocol: AsyncSequence where Element == String {
     init(
         directory: URL,
         input: UserInput,
+        maxInputTokenCount: Int?,
         maxOutputTokenCount: Int?
     ) throws
 }
@@ -17,6 +15,7 @@ public extension ModelProtocol {
     init(
         directory _: URL,
         input _: UserInput,
+        maxInputTokenCount _: Int?,
         maxOutputTokenCount _: Int?
     ) throws {
         throw SHLLMError.unimplemented
