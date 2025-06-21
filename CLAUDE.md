@@ -8,21 +8,20 @@ SHLLM is a Swift library that provides a high-level interface for running Large 
 
 ## Development Commands
 
+It's **very important** to use the following scripts (`bin/build.sh` or `bin/test.sh`) to build and test the library because `swift build` or `swift-test` do not build Metal, which SHLLM requires. 
+
 ```bash
 # Build the library
-swift build
+bin/build.sh
 
 # Run all tests
-swift test
+bin/test.sh
 
 # Run tests for a specific model
-swift test --filter "QwenTests"
+bin/test.sh SHLLMTests/MODEL_NAMETests
 
-# Build for release
-swift build -c release
-
-# Generate Xcode project (if needed)
-swift package generate-xcodeproj
+# Format the code
+bin/format.sh
 ```
 
 ## Architecture Overview

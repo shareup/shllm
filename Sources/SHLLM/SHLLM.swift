@@ -24,32 +24,13 @@ public enum SHLLM {
     }
 }
 
-@_exported import struct MLXLLM.Qwen2Configuration
-@_exported import class MLXLLM.Qwen2Model
-
-@_exported import struct MLXLLM.Qwen3Configuration
-@_exported import class MLXLLM.Qwen3Model
-
-@_exported import struct MLXLLM.Qwen3MoEConfiguration
-@_exported import class MLXLLM.Qwen3MoEModel
-
-@_exported import struct MLXLLM.GemmaConfiguration
-@_exported import class MLXLLM.GemmaModel
-
-@_exported import struct MLXLLM.Gemma2Configuration
 @_exported import class MLXLLM.Gemma2Model
-
-@_exported import struct MLXLLM.LlamaConfiguration
+@_exported import class MLXLLM.GemmaModel
 @_exported import class MLXLLM.LlamaModel
-
-@_exported import struct MLXLLM.OpenElmConfiguration
 @_exported import class MLXLLM.OpenELMModel
-
-@_exported import struct MLXLLM.PhiConfiguration
-@_exported import class MLXLLM.PhiModel
-
-@_exported import struct MLXLLM.Phi3Configuration
 @_exported import class MLXLLM.Phi3Model
-
-@_exported import struct MLXLLM.PhiMoEConfiguration
+@_exported import class MLXLLM.PhiModel
 @_exported import class MLXLLM.PhiMoEModel
+@_exported import class MLXLLM.Qwen2Model
+@_exported import class MLXLLM.Qwen3Model
+@_exported import class MLXLLM.Qwen3MoEModel
