@@ -39,9 +39,8 @@ struct Gemma2_2BTests {
 
 private func gemma2_2B(
     _ input: UserInput
-) throws -> LLM<Gemma2Configuration, Gemma2Model>? {
+) throws -> LLM<Gemma2Model>? {
     try loadModel(
-        LLM.gemma2_2B,
         directory: LLM.gemma2_2B,
         input: input
     )

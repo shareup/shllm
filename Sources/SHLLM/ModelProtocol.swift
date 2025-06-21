@@ -9,18 +9,14 @@ public protocol ModelProtocol: AsyncSequence where Element == String {
     init(
         directory: URL,
         input: UserInput,
-        maxInputTokenCount: Int?,
         maxOutputTokenCount: Int?
     ) throws
 }
-
-extension LLM: ModelProtocol {}
 
 public extension ModelProtocol {
     init(
         directory _: URL,
         input _: UserInput,
-        maxInputTokenCount _: Int?,
         maxOutputTokenCount _: Int?
     ) throws {
         throw SHLLMError.unimplemented

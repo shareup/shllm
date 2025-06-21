@@ -92,9 +92,8 @@ struct Qwen2_5__1_5BTests {
 
 private func qwen2_5__1_5B(
     _ input: UserInput
-) throws -> LLM<Qwen2Configuration, Qwen2Model>? {
+) throws -> LLM<Qwen2Model>? {
     try loadModel(
-        LLM.qwen2_5__1_5B,
         directory: LLM.qwen2_5__1_5B,
         input: input
     )

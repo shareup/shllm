@@ -39,9 +39,8 @@ struct Llama3_2__3BTests {
 
 private func llama3_2__3B(
     _ input: UserInput
-) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+) throws -> LLM<LlamaModel>? {
     try loadModel(
-        LLM.llama3_2__3B,
         directory: LLM.llama3_2__3B,
         input: input
     )

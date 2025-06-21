@@ -39,9 +39,8 @@ struct DeepSeekR1Tests {
 
 private func deepSeekR1(
     _ input: UserInput
-) throws -> LLM<Qwen2Configuration, Qwen2Model>? {
+) throws -> LLM<Qwen2Model>? {
     try loadModel(
-        LLM.deepSeekR1,
         directory: LLM.deepSeekR1,
         input: input
     )

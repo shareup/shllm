@@ -39,9 +39,8 @@ struct OpenELMTests {
 
 private func openELM(
     _ input: UserInput
-) throws -> LLM<OpenElmConfiguration, OpenELMModel>? {
+) throws -> LLM<OpenELMModel>? {
     try loadModel(
-        LLM.openELM,
         directory: LLM.openELM,
         input: input
     )

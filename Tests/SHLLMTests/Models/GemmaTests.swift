@@ -39,9 +39,8 @@ struct GemmaTests {
 
 private func gemma(
     _ input: UserInput
-) throws -> LLM<GemmaConfiguration, GemmaModel>? {
+) throws -> LLM<GemmaModel>? {
     try loadModel(
-        LLM.gemma,
         directory: LLM.gemma,
         input: input
     )

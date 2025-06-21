@@ -45,9 +45,8 @@ struct CodeLlamaTests {
 
 private func codeLlama(
     _ input: UserInput
-) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+) throws -> LLM<LlamaModel>? {
     try loadModel(
-        LLM.codeLlama,
         directory: LLM.codeLlama,
         input: input
     )

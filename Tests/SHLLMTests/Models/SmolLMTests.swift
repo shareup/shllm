@@ -39,9 +39,8 @@ struct SmolLMTests {
 
 private func smolLM(
     _ input: UserInput
-) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+) throws -> LLM<LlamaModel>? {
     try loadModel(
-        LLM.smolLM,
         directory: LLM.smolLM,
         input: input
     )

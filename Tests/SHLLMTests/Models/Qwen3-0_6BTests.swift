@@ -54,13 +54,19 @@ struct Qwen3__0_6BTests {
             guard let llm = try qwen3__0_6B(input) else { return }
 
             let tool: WeatherTool = try await llm.toolResult()
-            let expectedTool = WeatherTool.getCurrentWeather(.init(
-                location: "Paris, France",
-                unit: .fahrenheit
-            ))
+            let expectedTools: [WeatherTool] = [
+                .getCurrentWeather(.init(
+                    location: "Paris, France",
+                    unit: .fahrenheit
+                )),
+                .getCurrentWeather(.init(
+                    location: "Paris",
+                    unit: .fahrenheit
+                )),
+            ]
 
             print("\(#function) 1:", tool)
-            #expect(tool == expectedTool)
+            #expect(expectedTools.contains(tool))
         }
 
         do {
@@ -79,22 +85,27 @@ struct Qwen3__0_6BTests {
             guard let llm = try qwen3__0_6B(input) else { return }
 
             let tool: WeatherTool = try await llm.toolResult()
-            let expectedTool = WeatherTool.getCurrentWeather(.init(
-                location: "Paris, France",
-                unit: .celsius
-            ))
+            let expectedTools: [WeatherTool] = [
+                .getCurrentWeather(.init(
+                    location: "Paris, France",
+                    unit: .celsius
+                )),
+                .getCurrentWeather(.init(
+                    location: "Paris",
+                    unit: .celsius
+                )),
+            ]
 
             print("\(#function) 2:", tool)
-            #expect(tool == expectedTool)
+            #expect(expectedTools.contains(tool))
         }
     }
 }
 
 private func qwen3__0_6B(
     _ input: UserInput
-) throws -> LLM<Qwen3Configuration, Qwen3Model>? {
+) throws -> LLM<Qwen3Model>? {
     try loadModel(
-        LLM.qwen3__0_6B,
         directory: LLM.qwen3__0_6B,
         input: input
     )

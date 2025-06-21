@@ -92,9 +92,8 @@ struct Qwen3_8BTests {
 
 private func qwen3_8B(
     _ input: UserInput
-) throws -> LLM<Qwen3Configuration, Qwen3Model>? {
+) throws -> LLM<Qwen3Model>? {
     try loadModel(
-        LLM.qwen3_8B,
         directory: LLM.qwen3_8B,
         input: input
     )
