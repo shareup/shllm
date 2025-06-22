@@ -21,7 +21,7 @@ for arg in "$@"; do
   testSpecifiers+=("-only-testing:$arg")
 done
 
-tests=$(echo "${testSpecifiers[@]}" | sed 's/ *$//')
+tests=$(echo "${testSpecifiers[@]:-}" | sed 's/ *$//')
 
 beautify=""
 if command -v xcbeautify &>/dev/null; then
