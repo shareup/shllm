@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SHLLM is a Swift library that provides a high-level interface for running Large Language Models (LLMs) on Apple devices using MLX. It wraps various LLM models with a unified async/streaming API and supports quantized models for efficient on-device inference.
 
+## Coding Guidelines
+
+- DO NOT ADD CODE COMMENTS TO THE CODEBASE. Prefer descriptive function or variable names. Code should be clear and easy-to-understand by humans or assistants without needing any comments.
+
 ## Development Commands
 
 It's **very important** to use the following scripts (`bin/build.sh` or `bin/test.sh`) to build and test the library because `swift build` or `swift-test` do not build Metal, which SHLLM requires. 
