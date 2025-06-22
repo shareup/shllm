@@ -161,7 +161,7 @@ struct TruncatingUserInputProcessorTests {
 
         #expect(result.text.tokens.count == 4)
         let rawTokens = result.text.tokens.asArray(Int.self)
-        #expect(rawTokens == [1, 5, 6, 7])
+        #expect(rawTokens == [1, 2, 3, 47]) // 4 and 7 are combined when flattened
     }
 }
 

@@ -112,25 +112,41 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
         return tokenizer.decode(tokens: truncatedTokens)
     }
 
-    private func recentMessages(
-        _ messages: [Chat.Message],
+    private func recentMessages<M: UserInputMessage>(
+        _ messages: [M],
         limitedTo maxTokenCount: Int
-    ) async throws -> [Chat.Message] {
-        var selectedMessages: [Chat.Message] = []
-        var currentTokenCount = 0
+    ) async throws -> [M] {
+        guard !messages.isEmpty else { return [] }
 
-        for message in messages.reversed() {
-            let messageTokens = try await tokenCount(for: [message])
+        var remainingTokens = maxTokenCount
+        var indexesToInclude: [Int] = []
 
-            if currentTokenCount + messageTokens <= maxTokenCount {
-                selectedMessages.insert(message, at: 0)
-                currentTokenCount += messageTokens
-            } else {
-                break
+        var indices = messages.indices
+        while !indices.isEmpty {
+            let indexFromEnd = indices.removeLast()
+            let tokensFromEnd = try await [messages[indexFromEnd]]
+                .tokenCount(with: tokenizer)
+            if remainingTokens - tokensFromEnd > 0 {
+                indexesToInclude.append(indexFromEnd)
+                remainingTokens -= tokensFromEnd
+            }
+
+            guard !indices.isEmpty else { break }
+
+            let indexFromStart = indices.removeFirst()
+            let tokensFromStart = try await [messages[indexFromStart]]
+                .tokenCount(with: tokenizer)
+            if remainingTokens - tokensFromStart > 0 {
+                indexesToInclude.append(indexFromStart)
+                remainingTokens -= tokensFromStart
             }
         }
 
-        return selectedMessages
+        indexesToInclude.sort()
+
+        return indexesToInclude
+            .map { messages[$0] }
+            .flattened()
     }
 
     private func recentMessages(
@@ -171,5 +187,98 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
         }
         let tokens = tokenizer.encode(text: content)
         return tokens.count
+    }
+}
+
+private protocol UserInputMessage {}
+extension Chat.Message: UserInputMessage {}
+extension [String: Any]: UserInputMessage {}
+
+private extension Array where Element: UserInputMessage {
+    func tokenCount(with tokenizer: Tokenizer) async throws -> Int {
+        switch self {
+        case let messages as [Chat.Message]:
+            return try await messages.tokenCount(with: tokenizer)
+        case let messages as [[String: Any]]:
+            return try await messages.tokenCount(with: tokenizer)
+        default:
+            assertionFailure()
+            return 0
+        }
+    }
+
+    func flattened() -> Self {
+        switch self {
+        case let messages as [Chat.Message]:
+            messages.flattened() as! Self
+        case let messages as [[String: Any]]:
+            messages.flattened() as! Self
+        default:
+            self
+        }
+    }
+}
+
+private extension [Chat.Message] {
+    func tokenCount(with tokenizer: Tokenizer) async throws -> Int {
+        let combinedContent = map(\.content).joined(separator: "\n")
+        let tokens = tokenizer.encode(text: combinedContent)
+        return tokens.count
+    }
+
+    func flattened() -> Self {
+        guard !isEmpty else { return self }
+        var result: [Chat.Message] = []
+        var lastMessage = self[0]
+        for message in dropFirst() {
+            if lastMessage.role == message.role {
+                lastMessage.content.append(contentsOf: message.content)
+            } else {
+                result.append(lastMessage)
+                lastMessage = message
+            }
+        }
+        result.append(lastMessage)
+        return result
+    }
+}
+
+private extension [[String: Any]] {
+    func tokenCount(with tokenizer: Tokenizer) async throws -> Int {
+        var content = reduce(
+            into: ""
+        ) { (acc: inout String, message: [String: Any]) in
+            guard let content = message["content"] as? String,
+                  !content.isEmpty
+            else { return }
+            acc += content + "\n"
+        }
+        if content.hasSuffix("\n") {
+            content.removeLast(1)
+        }
+        let tokens = tokenizer.encode(text: content)
+        return tokens.count
+    }
+
+    func flattened() -> Self {
+        guard !isEmpty else { return self }
+        var result: [[String: Any]] = []
+        var lastMessage = self[0]
+        for message in dropFirst() {
+            guard let lastRole = lastMessage["role"] as? String,
+                  let messageRole = message["role"] as? String,
+                  lastRole == messageRole,
+                  let lastContent = lastMessage["content"] as? String,
+                  let messageContent = message["content"] as? String
+            else {
+                result.append(lastMessage)
+                lastMessage = message
+                continue
+            }
+
+            lastMessage["content"] = lastContent.appending(messageContent)
+        }
+        result.append(lastMessage)
+        return result
     }
 }
