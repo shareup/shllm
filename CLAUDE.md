@@ -18,7 +18,7 @@ bin/build.sh
 bin/test.sh
 
 # Run tests for a specific model
-bin/test.sh SHLLMTests/MODEL_NAMETests
+bin/test.sh SHLLMTests/FILE_NAME
 
 # Format the code
 bin/format.sh
