@@ -39,9 +39,8 @@ struct PhiMoETests {
 
 private func phiMoE(
     _ input: UserInput
-) throws -> LLM<PhiMoEConfiguration, PhiMoEModel>? {
+) throws -> LLM<PhiMoEModel>? {
     try loadModel(
-        LLM.phiMoE,
         directory: LLM.phiMoE,
         input: input
     )

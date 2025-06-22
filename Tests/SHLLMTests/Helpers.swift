@@ -1,23 +1,20 @@
 import Foundation
 import SHLLM
 
-func loadModel<M: ModelProtocol>(
-    _ initializer: @escaping (URL, UserInput, Int?, Int?) throws -> M,
+func loadModel<M>(
     directory: @autoclosure () throws -> URL,
     input: @autoclosure () -> UserInput,
-    maxInputTokenCount: @autoclosure () -> Int? = nil,
     maxOutputTokenCount: @autoclosure () -> Int? = nil
-) throws -> M? {
+) throws -> LLM<M>? {
     #if targetEnvironment(simulator)
         Swift.print("⚠️ LLMs are not supported in the Simulator")
         return nil
     #else
         do {
-            return try initializer(
-                directory(),
-                input(),
-                maxInputTokenCount(),
-                maxOutputTokenCount()
+            return try LLM(
+                directory: directory(),
+                input: input(),
+                maxOutputTokenCount: maxOutputTokenCount()
             )
         } catch let SHLLMError.directoryNotFound(name) {
             Swift.print("⚠️ \(name) does not exist")

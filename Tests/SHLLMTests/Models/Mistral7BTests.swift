@@ -39,9 +39,8 @@ struct Mistral7BTests {
 
 private func mistral7B(
     _ input: UserInput
-) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+) throws -> LLM<LlamaModel>? {
     try loadModel(
-        LLM.mistral7B,
         directory: LLM.mistral7B,
         input: input
     )

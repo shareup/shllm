@@ -39,9 +39,8 @@ struct MistralNemoTests {
 
 private func mistralNemo(
     _ input: UserInput
-) throws -> LLM<LlamaConfiguration, LlamaModel>? {
+) throws -> LLM<LlamaModel>? {
     try loadModel(
-        LLM.mistralNemo,
         directory: LLM.mistralNemo,
         input: input
     )

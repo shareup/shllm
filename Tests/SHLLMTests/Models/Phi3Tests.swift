@@ -39,9 +39,8 @@ struct Phi3Tests {
 
 private func phi3(
     _ input: UserInput
-) throws -> LLM<Phi3Configuration, Phi3Model>? {
+) throws -> LLM<Phi3Model>? {
     try loadModel(
-        LLM.phi3,
         directory: LLM.phi3,
         input: input
     )
