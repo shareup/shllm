@@ -28,6 +28,8 @@ public enum SHLLM {
 @_exported import struct MLXLMCommon.Message
 @_exported import struct MLXLMCommon.UserInput
 
+extension Chat.Message: Sendable {}
+
 @_exported import class MLXLLM.Gemma2Model
 @_exported import class MLXLLM.GemmaModel
 @_exported import class MLXLLM.LlamaModel
