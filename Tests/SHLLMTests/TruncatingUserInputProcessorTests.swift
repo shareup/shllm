@@ -47,9 +47,9 @@ struct TruncatingUserInputProcessorTests {
         let input = UserInput(chat: messages)
         let result = try await processor.prepare(input: input)
 
-        #expect(result.text.tokens.count == 7)
+        #expect(result.text.tokens.count == 8)
         let rawTokens = result.text.tokens.asArray(Int.self)
-        #expect(rawTokens == [1, 2, 3, 7, 8, 9, 10])
+        #expect(rawTokens == [1, 2, 3, 4, 5, 6, 9, 10])
     }
 
     @Test
@@ -72,9 +72,9 @@ struct TruncatingUserInputProcessorTests {
         let input = UserInput(messages: messages)
         let result = try await processor.prepare(input: input)
 
-        #expect(result.text.tokens.count == 7)
+        #expect(result.text.tokens.count == 8)
         let rawTokens = result.text.tokens.asArray(Int.self)
-        #expect(rawTokens == [1, 2, 3, 7, 8, 9, 10])
+        #expect(rawTokens == [1, 2, 3, 4, 5, 6, 9, 10])
     }
 
     @Test
@@ -99,7 +99,28 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testNoTruncationWhenUnderLimit() async throws {
+    func testRawSystemMessagesOnlyExceedsLimit() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 2
+        )
+
+        let messages: [[String: Any]] = [
+            ["role": "system", "content": "1 2 3 4 5 6 7"],
+        ]
+
+        let input = UserInput(messages: messages)
+
+        await #expect(throws: SHLLMError.self) {
+            try await processor.prepare(input: input)
+        }
+    }
+
+    @Test
+    func testNoMessageTruncationWhenUnderLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -114,6 +135,29 @@ struct TruncatingUserInputProcessorTests {
         ]
 
         let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        #expect(result.text.tokens.count == 4)
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens == [1, 2, 3, 4])
+    }
+
+    @Test
+    func testNoRawMessageTruncationWhenUnderLimit() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 100
+        )
+
+        let messages: [[String: Any]] = [
+            ["role": "system", "content": "1 2"],
+            ["role": "user", "content": "3 4"],
+        ]
+
+        let input = UserInput(messages: messages)
         let result = try await processor.prepare(input: input)
 
         #expect(result.text.tokens.count == 4)
@@ -159,9 +203,287 @@ struct TruncatingUserInputProcessorTests {
         let input = UserInput(chat: messages)
         let result = try await processor.prepare(input: input)
 
-        #expect(result.text.tokens.count == 4)
+        #expect(result.text.tokens.count == 5)
         let rawTokens = result.text.tokens.asArray(Int.self)
-        #expect(rawTokens == [1, 2, 3, 47]) // 4 and 7 are combined when flattened
+        #expect(rawTokens == [1, 2, 3, 4, 7]) // 4 and 7 are combined when flattened
+    }
+
+    @Test
+    func testRecentRawMessagesKept() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 6
+        )
+
+        let messages: [[String: Any]] = [
+            ["role": "system", "content": "1"],
+            ["role": "user", "content": "2 3 4"],
+            ["role": "assistant", "content": "5 6"],
+            ["role": "user", "content": "7"],
+        ]
+
+        let input = UserInput(messages: messages)
+        let result = try await processor.prepare(input: input)
+
+        #expect(result.text.tokens.count == 5)
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens == [1, 2, 3, 4, 7]) // 4 and 7 are combined when flattened
+    }
+
+    @Test
+    func testAlternatingAlgorithm() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 50
+        )
+
+        let messages: [Chat.Message] = [
+            .user("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26"), // 26
+            .assistant("27 28 29 30 31 32 33 34 35"), // 9
+            .user("36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52"), // 17
+            .assistant("53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69"), // 17
+            .user("70 71 72 73"), // 4
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+
+        #expect(rawTokens.count == 47)
+        #expect(Array(rawTokens[0 ..< 26]) == Array(1 ... 26))
+        #expect(Array(rawTokens[26 ..< 43]) == Array(53 ... 69))
+        #expect(Array(rawTokens[43 ..< 47]) == Array(70 ... 73))
+    }
+
+    @Test
+    func testMessageFlattening() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 7
+        )
+
+        let messages: [Chat.Message] = [
+            .user("1 2"),
+            .user("3 4"),
+            .assistant("5 6"),
+            .assistant("7 8"),
+            .user("9 10"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.count == 6)
+        #expect(rawTokens == [1, 2, 7, 8, 9, 10])
+    }
+
+    @Test
+    func testRawMessageFlattening() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 7
+        )
+
+        let messages: [Message] = [
+            ["role": "user", "content": "1 2"],
+            ["role": "user", "content": "3 4"],
+            ["role": "assistant", "content": "5 6"],
+            ["role": "assistant", "content": "7 8"],
+            ["role": "user", "content": "9 10"],
+        ]
+
+        let input = UserInput(messages: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.count == 6)
+        #expect(rawTokens == [1, 2, 7, 8, 9, 10])
+    }
+
+    @Test
+    func testEmptyMessages() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 10
+        )
+
+        let input = UserInput(chat: [])
+        let result = try await processor.prepare(input: input)
+
+        #expect(result.text.tokens.count == 0)
+    }
+
+    @Test
+    func testSingleMessage() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 10
+        )
+
+        let messages: [Chat.Message] = [
+            .user("1 2 3 4 5"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens == [1, 2, 3, 4, 5])
+    }
+
+    @Test
+    func testExactTokenLimit() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 5
+        )
+
+        let messages: [Chat.Message] = [
+            .user("1 2 3 4 5"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.count == 5)
+        #expect(rawTokens == [1, 2, 3, 4, 5])
+    }
+
+    @Test
+    func testSingleMessageExceedsTokenLimit() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 4
+        )
+
+        let messages: [Chat.Message] = [
+            .user("1 2 3 4 5"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.isEmpty)
+    }
+
+    @Test
+    func testSingleRawMessageExceedsTokenLimit() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 4
+        )
+
+        let messages: [[String: Any]] = [
+            ["role": "user", "content": "1 2 3 4 5"],
+        ]
+
+        let input = UserInput(messages: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.isEmpty)
+    }
+
+    @Test
+    func testOnlySystemMessages() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 10
+        )
+
+        let messages: [Chat.Message] = [
+            .system("1 2 3 4 5"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens == [1, 2, 3, 4, 5])
+    }
+
+    @Test
+    func testMultipleSystemMessages() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 10
+        )
+
+        let messages: [Chat.Message] = [
+            .system("1 2"),
+            .system("3 4"),
+            .user("5 6 7"),
+            .assistant("8 9 10 11"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.count == 8)
+        #expect(rawTokens == [1, 2, 3, 4, 8, 9, 10, 11])
+    }
+
+    @Test
+    func testVeryLongFirstMessage() async throws {
+        let tokenizer = NaiveTokenizer()
+        let baseProcessor = NaiveInputProcessor()
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseProcessor,
+            tokenizer: tokenizer,
+            maxInputTokenCount: 15
+        )
+
+        let messages: [Chat.Message] = [
+            .system("1 2"),
+            .user("3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18"),
+            .assistant("19 20"),
+            .user("21 22"),
+        ]
+
+        let input = UserInput(chat: messages)
+        let result = try await processor.prepare(input: input)
+
+        let rawTokens = result.text.tokens.asArray(Int.self)
+        #expect(rawTokens.count == 6)
+        #expect(rawTokens == [1, 2, 19, 20, 21, 22])
     }
 }
 

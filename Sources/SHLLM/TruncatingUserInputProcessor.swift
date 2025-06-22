@@ -126,7 +126,7 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
             let indexFromEnd = indices.removeLast()
             let tokensFromEnd = try await [messages[indexFromEnd]]
                 .tokenCount(with: tokenizer)
-            if remainingTokens - tokensFromEnd > 0 {
+            if remainingTokens - tokensFromEnd >= 0 {
                 indexesToInclude.append(indexFromEnd)
                 remainingTokens -= tokensFromEnd
             }
@@ -136,7 +136,7 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
             let indexFromStart = indices.removeFirst()
             let tokensFromStart = try await [messages[indexFromStart]]
                 .tokenCount(with: tokenizer)
-            if remainingTokens - tokensFromStart > 0 {
+            if remainingTokens - tokensFromStart >= 0 {
                 indexesToInclude.append(indexFromStart)
                 remainingTokens -= tokensFromStart
             }
@@ -147,24 +147,6 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
         return indexesToInclude
             .map { messages[$0] }
             .flattened()
-    }
-
-    private func recentMessages(
-        _ messages: [[String: Any]],
-        limitedTo maxTokenCount: Int
-    ) async throws -> [[String: Any]] {
-        var selectedMessages: [[String: Any]] = []
-        var currentTokenCount = 0
-        for message in messages.reversed() {
-            let messageTokens = try await tokenCount(for: [message])
-            if currentTokenCount + messageTokens <= maxTokenCount {
-                selectedMessages.insert(message, at: 0)
-                currentTokenCount += messageTokens
-            } else {
-                break
-            }
-        }
-        return selectedMessages
     }
 
     private func tokenCount(for messages: [Chat.Message]) async throws -> Int {
@@ -232,7 +214,7 @@ private extension [Chat.Message] {
         var lastMessage = self[0]
         for message in dropFirst() {
             if lastMessage.role == message.role {
-                lastMessage.content.append(contentsOf: message.content)
+                lastMessage.content.append(" \(message.content)")
             } else {
                 result.append(lastMessage)
                 lastMessage = message
@@ -276,7 +258,7 @@ private extension [[String: Any]] {
                 continue
             }
 
-            lastMessage["content"] = lastContent.appending(messageContent)
+            lastMessage["content"] = lastContent.appending(" \(messageContent)")
         }
         result.append(lastMessage)
         return result
