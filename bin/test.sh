@@ -28,10 +28,16 @@ if command -v xcbeautify &>/dev/null; then
   beautify="| xcbeautify"
 fi
 
+# eval "exec xcodebuild \
+#   -scheme SHLLM \
+#   -destination 'platform=OS X' \
+#   ${tests} \
+#   test ${beautify}"
+
 eval "exec xcodebuild \
   -scheme SHLLM \
   -destination 'platform=OS X' \
   ${tests} \
-  test ${beautify}"
+  test"
 
 popd &>/dev/null

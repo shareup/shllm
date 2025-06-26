@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.7"
+            from: "0.0.9"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
@@ -31,6 +31,7 @@ let package = Package(
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
+                .product(name: "MLXVLM", package: "mlx-swift-examples"),
                 .product(
                     name: "Transformers",
                     package: "swift-transformers",
@@ -40,6 +41,10 @@ let package = Package(
 //            resources: [
 //                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
 //                .copy("Resources/gemma-2-2b-it-4bit"),
+//                .copy("Resources/gemma-3-1b-it-qat-4bit"),
+//                .copy("Resources/gemma-3-4b-it-qat-4bit"),
+//                .copy("Resources/gemma-3-12b-it-qat-4bit"),
+//                .copy("Resources/gemma-3-27b-it-qat-4bit"),
 //                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
 //                .copy("Resources/Llama-3.2-3B-Instruct-4bit"),
 //                .copy("Resources/Mistral-Nemo-Instruct-2407-4bit"),
@@ -62,7 +67,10 @@ let package = Package(
         ),
         .testTarget(
             name: "SHLLMTests",
-            dependencies: ["SHLLM"]
+            dependencies: ["SHLLM"],
+            resources: [
+                .copy("Resources/3-authentication-factors.png"),
+            ]
         ),
     ]
 )

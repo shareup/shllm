@@ -17,7 +17,7 @@ struct CodeLlamaTests {
         guard let llm = try codeLlama(input) else { return }
 
         var result = ""
-        for try await reply in llm {
+        for try await reply in llm.text {
             result.append(reply)
         }
 
@@ -37,7 +37,7 @@ struct CodeLlamaTests {
 
         guard let llm = try codeLlama(input) else { return }
 
-        let result = try await llm.result
+        let result = try await llm.text.result
         Swift.print(result)
         #expect(!result.isEmpty)
     }

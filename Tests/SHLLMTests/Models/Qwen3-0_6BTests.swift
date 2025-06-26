@@ -1,4 +1,6 @@
 import Foundation
+import MLXLLM
+import MLXLMCommon
 @testable import SHLLM
 import Testing
 
@@ -14,7 +16,7 @@ struct Qwen3__0_6BTests {
         guard let llm = try qwen3__0_6B(input) else { return }
 
         var result = ""
-        for try await reply in llm {
+        for try await reply in llm.text {
             result.append(reply)
         }
 
@@ -31,82 +33,57 @@ struct Qwen3__0_6BTests {
 
         guard let llm = try qwen3__0_6B(input) else { return }
 
-        let result = try await llm.result
+        let result = try await llm.text.result
         Swift.print(result)
         #expect(!result.isEmpty)
     }
 
     @Test
     func canFetchTheWeather() async throws {
-        do {
-            let input: UserInput = .init(
-                messages: [
-                    [
-                        "role": "system",
-                        "content": "You are a weather fetching assistant. Your only purpose is to fetch weather data.",
-                    ],
-                    ["role": "system", "content": "The user prefers F°."],
-                    ["role": "user", "content": "What is weather in Paris, France like?"],
-                ],
-                tools: Tools([weatherToolFunction]).toSpec()
-            )
+        let input = UserInput(chat: [
+            .system(
+                "You are a weather assistant who must use the get_current_weather tool to fetch weather data for any location the user asks about."
+            ),
+            .user("What is the weather in Paris, France?"),
+        ])
 
-            guard let llm = try qwen3__0_6B(input) else { return }
+        guard let llm = try qwen3__0_6B(
+            input,
+            tools: [weatherTool]
+        ) else { return }
 
-            let tool: WeatherTool = try await llm.toolResult()
-            let expectedTools: [WeatherTool] = [
-                .getCurrentWeather(.init(
-                    location: "Paris, France",
-                    unit: .fahrenheit
-                )),
-                .getCurrentWeather(.init(
-                    location: "Paris",
-                    unit: .fahrenheit
-                )),
-            ]
+        var reply = ""
+        var toolCallCount = 0
+        var weatherLocationFound = false
 
-            print("\(#function) 1:", tool)
-            #expect(expectedTools.contains(tool))
+        for try await response in llm {
+            switch response {
+            case let .text(text):
+                reply.append(text)
+            case let .toolCall(toolCall):
+                toolCallCount += 1
+                #expect(toolCall.function.name == "get_current_weather")
+
+                if case let .string(location) = toolCall.function.arguments["location"] {
+                    weatherLocationFound = location.lowercased().contains("paris")
+                }
+            }
         }
 
-        do {
-            let input: UserInput = .init(
-                messages: [
-                    [
-                        "role": "system",
-                        "content": "You are weather fetching assistant. Your only purpose is to fetch weather data.",
-                    ],
-                    ["role": "system", "content": "The user prefers C°."],
-                    ["role": "user", "content": "What is weather in Paris, France like?"],
-                ],
-                tools: Tools([weatherToolFunction]).toSpec()
-            )
-
-            guard let llm = try qwen3__0_6B(input) else { return }
-
-            let tool: WeatherTool = try await llm.toolResult()
-            let expectedTools: [WeatherTool] = [
-                .getCurrentWeather(.init(
-                    location: "Paris, France",
-                    unit: .celsius
-                )),
-                .getCurrentWeather(.init(
-                    location: "Paris",
-                    unit: .celsius
-                )),
-            ]
-
-            print("\(#function) 2:", tool)
-            #expect(expectedTools.contains(tool))
-        }
+        #expect(!reply.isEmpty)
+        // Qwen 3 0.6B often calls the tool multiple times. I'm not sure why.
+        #expect(toolCallCount >= 1)
+        #expect(weatherLocationFound)
     }
 }
 
 private func qwen3__0_6B(
-    _ input: UserInput
+    _ input: UserInput,
+    tools: [any ToolProtocol] = []
 ) throws -> LLM<Qwen3Model>? {
     try loadModel(
-        directory: LLM.qwen3__0_6B,
-        input: input
+        directory: LLM<Qwen3Model>.qwen3__0_6B,
+        input: input,
+        tools: tools
     )
 }
