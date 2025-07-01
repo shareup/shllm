@@ -156,6 +156,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         return nil
 
                     case let .toolCall(toolCall):
+                        state = .streaming(stream, iterator)
                         return .toolCall(toolCall)
                     }
                 } while true
@@ -183,6 +184,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         return nil
 
                     case let .toolCall(toolCall):
+                        state = .streaming(stream, iterator)
                         return .toolCall(toolCall)
                     }
                 } while true

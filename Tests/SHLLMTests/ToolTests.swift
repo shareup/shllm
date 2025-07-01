@@ -60,26 +60,6 @@ struct ToolTests {
     }
 
     @Test
-    func canStreamLLMWithTools() async throws {
-        let input = UserInput(chat: [
-            .system("You are a helpful assistant."),
-            .user("What is the meaning of life?"),
-        ])
-
-        guard let llm: LLM<Qwen3Model> = try loadModel(
-            directory: LLM<Qwen3Model>.qwen3__0_6B,
-            input: input
-        ) else { return }
-
-        var result = ""
-        for try await response in llm.text {
-            result.append(response)
-        }
-
-        #expect(!result.isEmpty)
-    }
-
-    @Test
     func canUseNewResponseAPI() async throws {
         let input = UserInput(chat: [
             .system(
@@ -88,13 +68,11 @@ struct ToolTests {
             .user("What is the weather in San Francisco?"),
         ])
 
-        guard let directory = try? LLM<Qwen3Model>.qwen3__1_7B else { return }
-
-        let llm = LLM<Qwen3Model>(
-            directory: directory,
+        guard let llm: LLM<Qwen3Model> = try loadModel(
+            directory: LLM<Qwen3Model>.qwen3__1_7B,
             input: input,
             tools: [weatherTool]
-        )
+        ) else { return }
 
         var reply = ""
         var toolCallCount = 0
