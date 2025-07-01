@@ -4,17 +4,21 @@ import SHLLM
 func loadModel<M>(
     directory: @autoclosure () throws -> URL,
     input: @autoclosure () -> UserInput,
-    maxOutputTokenCount: @autoclosure () -> Int? = nil
+    tools: [any ToolProtocol] = [],
+    maxOutputTokenCount: @autoclosure () -> Int? = nil,
+    customConfiguration: LLM.CustomConfiguration? = nil
 ) throws -> LLM<M>? {
     #if targetEnvironment(simulator)
         Swift.print("⚠️ LLMs are not supported in the Simulator")
         return nil
     #else
         do {
-            return try LLM(
-                directory: directory(),
+            return LLM(
+                directory: try directory(),
                 input: input(),
-                maxOutputTokenCount: maxOutputTokenCount()
+                tools: tools,
+                maxOutputTokenCount: maxOutputTokenCount(),
+                customConfiguration: customConfiguration
             )
         } catch let SHLLMError.directoryNotFound(name) {
             Swift.print("⚠️ \(name) does not exist")
@@ -28,87 +32,65 @@ func loadModel<M>(
     #endif
 }
 
-let weatherToolFunction = ToolFunction(
-    name: "get_current_weather",
-    description: "Get the current weather in a given location",
-    parameters: [
-        .string(
-            name: "location",
-            description: "The city and state, e.g. San Francisco, CA",
-            required: true
+func imageInput(
+    _ image: Data,
+    message: String = "Extract the text in this image."
+) -> UserInput {
+    UserInput(chat: [
+        .system(
+            "You are an image understanding model capable of describing the salient features of any image."
         ),
-        .string(name: "unit", restrictTo: ["celsius", "fahrenheit"]),
-    ]
-)
-
-enum WeatherTool: Codable, CustomStringConvertible, Hashable {
-    case getCurrentWeather(GetCurrentWeatherArguments)
-
-    private enum CodingKeys: String, CodingKey {
-        case name
-        case arguments
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let toolName = try container.decode(String.self, forKey: .name)
-
-        switch toolName {
-        case "get_current_weather":
-            let args = try container.decode(
-                GetCurrentWeatherArguments.self,
-                forKey: .arguments
-            )
-            self = .getCurrentWeather(args)
-
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: CodingKeys.name,
-                in: container,
-                debugDescription: "Unrecognized tool name: \(toolName)"
-            )
-        }
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case let .getCurrentWeather(args):
-            try container.encode("getCurrentWeather", forKey: .name)
-            try container.encode(args, forKey: .arguments)
-        }
-    }
-
-    var description: String {
-        switch self {
-        case let .getCurrentWeather(args):
-            "getCurrentWeather(\(args))"
-        }
-    }
+        .user(message, images: [.ciImage(.init(data: image)!)]),
+    ])
 }
 
-struct GetCurrentWeatherArguments: Codable, CustomStringConvertible, Hashable, Sendable {
-    var location: String
-    var unit: WeatherUnit
+func imageInput(
+    _ image: URL,
+    message: String = "Extract the text in this image."
+) -> UserInput {
+    UserInput(chat: [
+        .system(
+            "You are an image understanding model capable of describing the salient features of any image."
+        ),
+        .user(message, images: [.url(image)]),
+    ])
+}
 
-    init(location: String, unit: WeatherUnit) {
+struct WeatherArguments: Codable, CustomStringConvertible, Hashable, Sendable {
+    var location: String
+    var unit: String?
+
+    init(location: String, unit: String? = nil) {
         self.location = location
         self.unit = unit
     }
 
     var description: String {
-        "'\(location)', '\(unit)'"
+        "'\(location)', unit: \(unit ?? "nil")"
     }
 }
 
-enum WeatherUnit: String, Codable, CustomStringConvertible {
-    case celsius
-    case fahrenheit
+struct WeatherResponse: Codable, Hashable, Sendable {
+    let temperature: Double
+    let conditions: String
+}
 
-    var description: String {
-        switch self {
-        case .celsius: "Celsius"
-        case .fahrenheit: "Fahrenheit"
-        }
-    }
+let weatherTool = Tool<WeatherArguments, WeatherResponse>(
+    name: "get_current_weather",
+    description: "Get the current weather in a given location",
+    parameters: [
+        .required(
+            "location",
+            type: .string,
+            description: "The city and state, e.g. San Francisco, CA"
+        ),
+        .optional(
+            "unit",
+            type: .string,
+            description: "Temperature unit",
+            extraProperties: ["enum": ["celsius", "fahrenheit"]]
+        ),
+    ]
+) { _ in
+    WeatherResponse(temperature: 22.0, conditions: "Sunny")
 }

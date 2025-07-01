@@ -28,9 +28,15 @@ public enum SHLLM {
 @_exported import struct MLXLMCommon.Message
 @_exported import struct MLXLMCommon.UserInput
 
-extension Chat.Message: Sendable {}
+@_exported import struct MLXLMCommon.Tool
+@_exported import struct MLXLMCommon.ToolParameter
+@_exported import enum MLXLMCommon.ToolParameterType
+@_exported import protocol MLXLMCommon.ToolProtocol
+
+extension Chat.Message: @retroactive @unchecked Sendable {}
 
 @_exported import class MLXLLM.Gemma2Model
+@_exported import class MLXLLM.Gemma3TextModel
 @_exported import class MLXLLM.GemmaModel
 @_exported import class MLXLLM.LlamaModel
 @_exported import class MLXLLM.OpenELMModel
@@ -40,3 +46,5 @@ extension Chat.Message: Sendable {}
 @_exported import class MLXLLM.Qwen2Model
 @_exported import class MLXLLM.Qwen3Model
 @_exported import class MLXLLM.Qwen3MoEModel
+
+@_exported import class MLXVLM.Gemma3

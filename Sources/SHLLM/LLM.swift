@@ -6,42 +6,70 @@ import MLX
 import MLXLLM
 import MLXLMCommon
 import MLXNN
+import MLXVLM
 import Tokenizers
 
-public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
-    public typealias Element = String
+public struct LLM<Model: LanguageModel>: AsyncSequence {
+    public enum Response {
+        case text(String)
+        case toolCall(ToolCall)
+    }
+
+    public typealias Element = Response
+    public typealias CustomConfiguration =
+        (ModelConfiguration) -> ModelConfiguration
 
     private let directory: URL
     private let input: UserInput
+    private let tools: [any ToolProtocol]
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
+    private let customConfiguration: CustomConfiguration?
 
     public init(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        customConfiguration: CustomConfiguration? = nil
     ) {
         self.directory = directory
+        let input = {
+            var input = input
+            input.processing.resize = Model.self is any VLMModel.Type
+                ? CGSize(width: 896, height: 896)
+                : nil
+            input.tools = tools.isEmpty
+                ? nil
+                : tools.map(\.schema)
+            return input
+        }()
         self.input = input
+        self.tools = tools
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
+        self.customConfiguration = customConfiguration
     }
 
     public func makeAsyncIterator() -> AsyncIterator {
         Self.AsyncIterator(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: customConfiguration
         )
     }
 
     public struct AsyncIterator: AsyncIteratorProtocol {
         private let directory: URL
         private let input: UserInput
+        private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
+        private let customConfiguration: CustomConfiguration?
 
         private var state: State
 
@@ -50,8 +78,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
             case loaded(ModelContext)
             case streaming(
                 AsyncStream<Generation>,
-                AsyncStream<Generation>.AsyncIterator,
-                Int
+                AsyncStream<Generation>.AsyncIterator
             )
             case failed(Error)
             case finished
@@ -60,20 +87,25 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
         fileprivate init(
             directory: URL,
             input: UserInput,
+            tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
-            maxOutputTokenCount: Int?
+            maxOutputTokenCount: Int?,
+            customConfiguration: CustomConfiguration? = nil
         ) {
             self.directory = directory
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
+            self.customConfiguration = customConfiguration
+            self.tools = tools
             state = .initial
         }
 
-        public mutating func next() async throws -> String? {
+        public mutating func next() async throws -> Response? {
             switch state {
             case .initial:
                 do {
+                    try SHLLM.assertSupportedDevice
                     let factory = try await loadModel(directory: directory)
 
                     let wrappedProcessor = TruncatingUserInputProcessor(
@@ -82,8 +114,11 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
                         maxInputTokenCount: maxInputTokenCount
                     )
 
+                    let config = customConfiguration?(factory.configuration)
+                        ?? factory.configuration
+
                     let context = ModelContext(
-                        configuration: factory.configuration,
+                        configuration: config,
                         model: factory.model,
                         processor: wrappedProcessor,
                         tokenizer: factory.tokenizer
@@ -99,19 +134,13 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
                 let input = try await context.processor.prepare(input: input)
                 let stream = try MLXLMCommon.generate(
                     input: input,
-                    parameters: .init(),
+                    parameters: .init(maxTokens: maxOutputTokenCount),
                     context: context
                 )
 
                 var iterator = stream.makeAsyncIterator()
-                var tokenCount = 0
 
                 repeat {
-                    if let maxOutputTokenCount, tokenCount >= maxOutputTokenCount {
-                        state = .finished
-                        return nil
-                    }
-
                     guard let next = await iterator.next() else {
                         state = .finished
                         return nil
@@ -119,17 +148,16 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
 
                     switch next {
                     case let .chunk(chunk):
-                        tokenCount += 1
-                        state = .streaming(
-                            stream,
-                            iterator,
-                            tokenCount
-                        )
-                        return chunk
+                        state = .streaming(stream, iterator)
+                        return .text(chunk)
 
                     case .info:
                         state = .finished
                         return nil
+
+                    case let .toolCall(toolCall):
+                        state = .streaming(stream, iterator)
+                        return .toolCall(toolCall)
                     }
                 } while true
 
@@ -139,17 +167,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
             case .finished:
                 return nil
 
-            case .streaming(
-                let stream,
-                var iterator,
-                var tokenCount
-            ):
+            case .streaming(let stream, var iterator):
                 repeat {
-                    if let maxOutputTokenCount, tokenCount >= maxOutputTokenCount {
-                        state = .finished
-                        return nil
-                    }
-
                     guard let next = await iterator.next() else {
                         state = .finished
                         return nil
@@ -157,21 +176,120 @@ public struct LLM<Model: LanguageModel>: AsyncSequence, ModelProtocol {
 
                     switch next {
                     case let .chunk(chunk):
-                        tokenCount += 1
-                        state = .streaming(
-                            stream,
-                            iterator,
-                            tokenCount
-                        )
-                        return chunk
+                        state = .streaming(stream, iterator)
+                        return .text(chunk)
 
                     case .info:
                         state = .finished
                         return nil
+
+                    case let .toolCall(toolCall):
+                        state = .streaming(stream, iterator)
+                        return .toolCall(toolCall)
                     }
                 } while true
             }
         }
+    }
+}
+
+public extension LLM {
+    var text: TextAsyncSequence {
+        TextAsyncSequence(llm: self)
+    }
+
+    struct TextAsyncSequence: AsyncSequence {
+        public typealias Element = String
+        public typealias CustomConfiguration = LLM<Model>.CustomConfiguration
+
+        private let llm: LLM<Model>
+
+        fileprivate init(llm: LLM<Model>) {
+            self.llm = llm
+        }
+
+        public func makeAsyncIterator() -> AsyncIterator {
+            AsyncIterator(llm.makeAsyncIterator())
+        }
+
+        public var result: String {
+            get async throws {
+                var text = ""
+                for try await chunk in self {
+                    text += chunk
+                }
+                return text
+            }
+        }
+
+        public struct AsyncIterator: AsyncIteratorProtocol {
+            private var iterator: LLM<Model>.AsyncIterator
+
+            fileprivate init(_ iterator: LLM<Model>.AsyncIterator) {
+                self.iterator = iterator
+            }
+
+            public mutating func next() async throws -> String? {
+                while let response = try await iterator.next() {
+                    switch response {
+                    case let .text(text):
+                        return text
+                    case .toolCall:
+                        continue
+                    }
+                }
+                return nil
+            }
+        }
+    }
+}
+
+public extension LLM where Model: VLMModel {
+    init(
+        directory: URL,
+        prompt: String,
+        userMessage: String,
+        image: URL,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil,
+        customConfiguration: CustomConfiguration? = nil
+    ) {
+        let input = UserInput(chat: [
+            .system(prompt),
+            .user(userMessage, images: [.url(image)]),
+        ])
+        self.init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: customConfiguration
+        )
+    }
+
+    init(
+        directory: URL,
+        prompt: String,
+        userMessage: String,
+        image: Data,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil,
+        customConfiguration: CustomConfiguration? = nil
+    ) {
+        let input = UserInput(chat: [
+            .system(prompt),
+            .user(
+                userMessage,
+                images: [.ciImage(.init(data: image)!)]
+            ),
+        ])
+        self.init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: customConfiguration
+        )
     }
 }
 
@@ -270,6 +388,122 @@ extension LLM where Model == Gemma2Model {
     static var gemma2_9B: URL {
         get throws {
             let dir = "gemma-2-9b-it-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Gemma 3 Text
+
+extension LLM where Model == Gemma3TextModel {
+    public static func gemma3_1B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma3TextModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        )
+    }
+
+    static var gemma3_1B: URL {
+        get throws {
+            let dir = "gemma-3-1b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Gemma 3 Vision
+
+extension LLM where Model == Gemma3 {
+    public static func gemma3_4B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma3> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        )
+    }
+
+    static var gemma3_4B: URL {
+        get throws {
+            let dir = "gemma-3-4b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func gemma3_12B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma3> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        )
+    }
+
+    static var gemma3_12B: URL {
+        get throws {
+            let dir = "gemma-3-12b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    public static func gemma3_27B(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma3> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        )
+    }
+
+    static var gemma3_27B: URL {
+        get throws {
+            let dir = "gemma-3-27b-it-qat-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
@@ -609,7 +843,11 @@ extension LLM where Model == Qwen2Model {
             return try Bundle.shllm.directory(named: dir)
         }
     }
+}
 
+// MARK: - Qwen3
+
+extension LLM where Model == Qwen3Model {
     public static func qwen3__0_6B(
         directory: URL,
         input: UserInput,
@@ -697,7 +935,11 @@ extension LLM where Model == Qwen2Model {
             return try Bundle.shllm.directory(named: dir)
         }
     }
+}
 
+// MARK: - Qwen3 MoE
+
+extension LLM where Model == Qwen3MoEModel {
     public static func qwen3_30B(
         directory: URL,
         input: UserInput,

@@ -14,7 +14,7 @@ struct Phi2Tests {
         guard let llm = try phi2(input) else { return }
 
         var result = ""
-        for try await reply in llm {
+        for try await reply in llm.text {
             result.append(reply)
         }
 
@@ -31,7 +31,7 @@ struct Phi2Tests {
 
         guard let llm = try phi2(input) else { return }
 
-        let result = try await llm.result
+        let result = try await llm.text.result
         Swift.print(result)
         #expect(!result.isEmpty)
     }
