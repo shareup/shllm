@@ -72,7 +72,7 @@ extension ToolParameter: @retroactive Equatable {
         else { return false }
         let lhsProps = lhs.extraProperties as NSDictionary
         let rhsProps = rhs.extraProperties as NSDictionary
-        return lhsProps.isEqual(to: rhsProps)
+        return lhsProps.isEqual(to: rhsProps as! [AnyHashable: Any])
     }
 }
 
