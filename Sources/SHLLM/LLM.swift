@@ -29,6 +29,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     public init(
         directory: URL,
         input: UserInput,
+        processing: UserInput.Processing? = nil,
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
@@ -37,9 +38,9 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.directory = directory
         let input = {
             var input = input
-            input.processing.resize = Model.self is any VLMModel.Type
-                ? CGSize(width: 896, height: 896)
-                : nil
+            if let processing {
+                input.processing = processing
+            }
             input.tools = tools.isEmpty
                 ? nil
                 : tools.map(\.schema)
@@ -250,6 +251,7 @@ public extension LLM where Model: VLMModel {
         prompt: String,
         userMessage: String,
         image: URL,
+        processing: UserInput.Processing? = nil,
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil
@@ -261,6 +263,7 @@ public extension LLM where Model: VLMModel {
         self.init(
             directory: directory,
             input: input,
+            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: customConfiguration
@@ -272,6 +275,7 @@ public extension LLM where Model: VLMModel {
         prompt: String,
         userMessage: String,
         image: Data,
+        processing: UserInput.Processing? = nil,
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil
@@ -286,6 +290,7 @@ public extension LLM where Model: VLMModel {
         self.init(
             directory: directory,
             input: input,
+            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: customConfiguration
@@ -430,6 +435,7 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_4B(
         directory: URL,
         input: UserInput,
+        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -437,6 +443,7 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
+            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -457,6 +464,7 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_12B(
         directory: URL,
         input: UserInput,
+        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -464,6 +472,7 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
+            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -484,6 +493,7 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_27B(
         directory: URL,
         input: UserInput,
+        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -491,6 +501,7 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
+            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in

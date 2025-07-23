@@ -6,7 +6,7 @@ import Testing
 @Suite(.serialized)
 struct ToolSHLLMTests {
     @Test
-    func testToolProtocolTypeProperty() throws {
+    func toolProtocolTypeProperty() throws {
         let tool = Tool<EmptyInput, EmptyOutput>(
             name: "test_tool",
             description: "A test tool",
@@ -17,7 +17,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testToolProtocolNameProperty() throws {
+    func toolProtocolNameProperty() throws {
         let tool = Tool<EmptyInput, EmptyOutput>(
             name: "get_weather",
             description: "Gets weather data",
@@ -28,7 +28,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testToolProtocolDescriptionProperty() throws {
+    func toolProtocolDescriptionProperty() throws {
         let tool = Tool<EmptyInput, EmptyOutput>(
             name: "test_tool",
             description: "This is a test tool for validation",
@@ -39,7 +39,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testToolProtocolParametersProperty() throws {
+    func toolProtocolParametersProperty() throws {
         let tool = Tool<TestInput, EmptyOutput>(
             name: "test_tool",
             description: "A test tool",
@@ -67,7 +67,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testParametersWithComplexTypes() throws {
+    func parametersWithComplexTypes() throws {
         let tool = Tool<ComplexInput, EmptyOutput>(
             name: "complex_tool",
             description: "A tool with complex parameters",
@@ -106,7 +106,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testParametersWithExtraProperties() throws {
+    func parametersWithExtraProperties() throws {
         let tool = Tool<TestInput, EmptyOutput>(
             name: "test_tool",
             description: "A test tool",
@@ -142,7 +142,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testToolParameterTypeEquality() {
+    func toolParameterTypeEquality() {
         #expect(ToolParameterType.string == ToolParameterType.string)
         #expect(ToolParameterType.bool == ToolParameterType.bool)
         #expect(ToolParameterType.int == ToolParameterType.int)
@@ -234,7 +234,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testToolParameterEquality() {
+    func toolParameterEquality() {
         let param1 = ToolParameter.required("test", type: .string, description: "Test param")
         let param2 = ToolParameter.required("test", type: .string, description: "Test param")
         #expect(param1 == param2)
@@ -409,7 +409,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testInvalidSchemaHandling() {
+    func invalidSchemaHandling() {
         let invalidTool = TestInvalidTool()
 
         #expect(invalidTool.type == nil)
@@ -419,7 +419,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testSchemaWithMissingFunction() {
+    func schemaWithMissingFunction() {
         let toolWithMissingFunction = TestToolWithMissingFunction()
 
         #expect(toolWithMissingFunction.type == "function")
@@ -429,7 +429,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testSchemaWithInvalidParameters() {
+    func schemaWithInvalidParameters() {
         let toolWithInvalidParams = TestToolWithInvalidParameters()
 
         #expect(toolWithInvalidParams.type == "function")
@@ -439,7 +439,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testNestedObjectParsing() throws {
+    func nestedObjectParsing() throws {
         let tool = Tool<NestedInput, EmptyOutput>(
             name: "nested_tool",
             description: "A tool with nested objects",
@@ -494,7 +494,7 @@ struct ToolSHLLMTests {
     }
 
     @Test
-    func testArrayOfComplexTypes() throws {
+    func arrayOfComplexTypes() throws {
         let tool = Tool<ArrayInput, EmptyOutput>(
             name: "array_tool",
             description: "A tool with array of objects",
