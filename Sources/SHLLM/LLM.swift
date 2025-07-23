@@ -435,7 +435,6 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_4B(
         directory: URL,
         input: UserInput,
-        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -443,7 +442,6 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
-            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -464,7 +462,6 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_12B(
         directory: URL,
         input: UserInput,
-        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -472,7 +469,6 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
-            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -493,7 +489,6 @@ extension LLM where Model == Gemma3 {
     public static func gemma3_27B(
         directory: URL,
         input: UserInput,
-        processing: UserInput.Processing = .init(resize: CGSize(width: 896, height: 896)),
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -501,7 +496,6 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
-            processing: processing,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
