@@ -8,6 +8,31 @@ public enum SHLLM {
         MLX.GPU.clearCache()
     }
 
+    public static var cacheLimit: Int {
+        get {
+            MLX.GPU.cacheLimit
+        }
+        set {
+            MLX.GPU.set(cacheLimit: newValue)
+        }
+    }
+
+    public static var memoryLimit: Int {
+        get {
+            MLX.GPU.memoryLimit
+        }
+        set {
+            MLX.GPU.set(memoryLimit: newValue)
+        }
+    }
+
+    public static var recommendedMaxWorkingSetSize: Int {
+        guard let device = MTLCreateSystemDefaultDevice(),
+              device.recommendedMaxWorkingSetSize < Int.max
+        else { return 0 }
+        return Int(device.recommendedMaxWorkingSetSize)
+    }
+
     public static var isSupportedDevice: Bool {
         guard let _ = MTLCreateSystemDefaultDevice() else {
             return false
