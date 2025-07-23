@@ -93,7 +93,7 @@ struct ToolTests {
     }
 
     @Test
-    func testJSONIntegration() throws {
+    func jsonIntegration() throws {
         struct ComplexInput: Codable {
             let query: String
             let filters: [String]

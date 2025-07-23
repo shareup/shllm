@@ -8,7 +8,7 @@ import Tokenizers
 @Suite(.serialized)
 struct TruncatingUserInputProcessorTests {
     @Test
-    func testTextPromptTruncation() async throws {
+    func textPromptTruncation() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -28,7 +28,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testChatMessagesPreserveSystem() async throws {
+    func chatMessagesPreserveSystem() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -53,7 +53,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testRawMessagesPreserveSystem() async throws {
+    func rawMessagesPreserveSystem() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -78,7 +78,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testSystemMessagesOnlyExceedsLimit() async throws {
+    func systemMessagesOnlyExceedsLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -99,7 +99,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testRawSystemMessagesOnlyExceedsLimit() async throws {
+    func rawSystemMessagesOnlyExceedsLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -120,7 +120,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testNoMessageTruncationWhenUnderLimit() async throws {
+    func noMessageTruncationWhenUnderLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -143,7 +143,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testNoRawMessageTruncationWhenUnderLimit() async throws {
+    func noRawMessageTruncationWhenUnderLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -166,7 +166,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testNoLimitPassesThrough() async throws {
+    func noLimitPassesThrough() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -184,7 +184,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testRecentMessagesKept() async throws {
+    func recentMessagesKept() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -209,7 +209,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testRecentRawMessagesKept() async throws {
+    func recentRawMessagesKept() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -234,7 +234,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testAlternatingAlgorithm() async throws {
+    func alternatingAlgorithm() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -263,7 +263,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testMessageFlattening() async throws {
+    func messageFlattening() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -289,7 +289,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testRawMessageFlattening() async throws {
+    func rawMessageFlattening() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -315,7 +315,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testEmptyMessages() async throws {
+    func emptyMessages() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -331,7 +331,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testSingleMessage() async throws {
+    func singleMessage() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -352,7 +352,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testExactTokenLimit() async throws {
+    func exactTokenLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -374,7 +374,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testSingleMessageExceedsTokenLimit() async throws {
+    func singleMessageExceedsTokenLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -395,7 +395,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testSingleRawMessageExceedsTokenLimit() async throws {
+    func singleRawMessageExceedsTokenLimit() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -416,7 +416,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testOnlySystemMessages() async throws {
+    func onlySystemMessages() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -437,7 +437,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testMultipleSystemMessages() async throws {
+    func multipleSystemMessages() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(
@@ -462,7 +462,7 @@ struct TruncatingUserInputProcessorTests {
     }
 
     @Test
-    func testVeryLongFirstMessage() async throws {
+    func veryLongFirstMessage() async throws {
         let tokenizer = NaiveTokenizer()
         let baseProcessor = NaiveInputProcessor()
         let processor = TruncatingUserInputProcessor(

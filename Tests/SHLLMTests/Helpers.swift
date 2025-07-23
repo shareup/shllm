@@ -4,6 +4,7 @@ import SHLLM
 func loadModel<M>(
     directory: @autoclosure () throws -> URL,
     input: @autoclosure () -> UserInput,
+    processing: @autoclosure (() -> UserInput.Processing?) = nil,
     tools: [any ToolProtocol] = [],
     maxOutputTokenCount: @autoclosure () -> Int? = nil,
     customConfiguration: LLM.CustomConfiguration? = nil
@@ -16,6 +17,7 @@ func loadModel<M>(
             return LLM(
                 directory: try directory(),
                 input: input(),
+                processing: processing(),
                 tools: tools,
                 maxOutputTokenCount: maxOutputTokenCount(),
                 customConfiguration: customConfiguration
