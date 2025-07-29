@@ -4,7 +4,7 @@ import MLXVLM
 import Testing
 
 @Suite(.serialized)
-struct Gemma3_4BTests {
+struct Gemma3_4B_4BitTests {
     @Test
     func canStreamResult() async throws {
         guard SHLLM.isSupportedDevice else {
@@ -95,12 +95,12 @@ struct Gemma3_4BTests {
     }
 }
 
-private extension Gemma3_4BTests {
+private extension Gemma3_4B_4BitTests {
     func gemma3_4B(
         input: UserInput
     ) throws -> LLM<Gemma3>? {
         try loadModel(
-            directory: LLM.gemma3_4B,
+            directory: LLM.gemma3_4B_4Bit,
             input: input,
             customConfiguration: { config in
                 var config = config
@@ -114,7 +114,7 @@ private extension Gemma3_4BTests {
         image: Data
     ) throws -> LLM<Gemma3>? {
         try loadModel(
-            directory: LLM.gemma3_4B,
+            directory: LLM.gemma3_4B_4Bit,
             input: imageInput(image),
             customConfiguration: { config in
                 var config = config
@@ -128,7 +128,7 @@ private extension Gemma3_4BTests {
         image: URL
     ) throws -> LLM<Gemma3>? {
         try loadModel(
-            directory: LLM.gemma3_4B,
+            directory: LLM.gemma3_4B_4Bit,
             input: imageInput(image),
             customConfiguration: { config in
                 var config = config
