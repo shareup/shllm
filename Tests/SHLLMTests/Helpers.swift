@@ -1,7 +1,8 @@
 import Foundation
+import protocol MLXLMCommon.LanguageModel
 import SHLLM
 
-func loadModel<M>(
+func loadModel<M: LanguageModel>(
     directory: @autoclosure () throws -> URL,
     input: @autoclosure () -> UserInput,
     processing: @autoclosure (() -> UserInput.Processing?) = nil,

@@ -353,7 +353,7 @@ extension LLM where Model == GemmaModel {
 // MARK: - Gemma 2
 
 extension LLM where Model == Gemma2Model {
-    public static func gemma2_2B(
+    public static func gemma2(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -373,21 +373,6 @@ extension LLM where Model == Gemma2Model {
             let dir = "gemma-2-2b-it-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
-    }
-
-    public static func gemma2_9B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Gemma2Model> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
     }
 
     static var gemma2_9B: URL {
@@ -432,7 +417,7 @@ extension LLM where Model == Gemma3TextModel {
 // MARK: - Gemma 3 Vision
 
 extension LLM where Model == Gemma3 {
-    public static func gemma3_4B(
+    public static func gemma3(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -452,31 +437,18 @@ extension LLM where Model == Gemma3 {
         )
     }
 
-    static var gemma3_4B: URL {
+    static var gemma3_4B_3Bit: URL {
         get throws {
-            let dir = "gemma-3-4b-it-qat-4bit"
+            let dir = "gemma-3-4b-it-qat-3bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
 
-    public static func gemma3_12B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Gemma3> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: { config in
-                var config = config
-                config.extraEOSTokens = ["<end_of_turn>"]
-                return config
-            }
-        )
+    static var gemma3_4B_4Bit: URL {
+        get throws {
+            let dir = "gemma-3-4b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
     }
 
     static var gemma3_12B: URL {
@@ -484,26 +456,6 @@ extension LLM where Model == Gemma3 {
             let dir = "gemma-3-12b-it-qat-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
-    }
-
-    public static func gemma3_27B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Gemma3> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: { config in
-                var config = config
-                config.extraEOSTokens = ["<end_of_turn>"]
-                return config
-            }
-        )
     }
 
     static var gemma3_27B: URL {
@@ -539,7 +491,7 @@ extension LLM where Model == LlamaModel {
         }
     }
 
-    public static func llama3_8B(
+    public static func llama3(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -561,21 +513,6 @@ extension LLM where Model == LlamaModel {
         }
     }
 
-    public static func llama3_1__8B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<LlamaModel> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
     static var llama3_1__8B: URL {
         get throws {
             let dir = "Meta-Llama-3.1-8B-Instruct-4bit"
@@ -583,41 +520,11 @@ extension LLM where Model == LlamaModel {
         }
     }
 
-    public static func llama3_2__1B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<LlamaModel> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
     static var llama3_2__1B: URL {
         get throws {
             let dir = "Llama-3.2-1B-Instruct-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
-    }
-
-    public static func llama3_2__3B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<LlamaModel> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
     }
 
     static var llama3_2__3B: URL {
@@ -631,7 +538,7 @@ extension LLM where Model == LlamaModel {
 // MARK: - Mistral
 
 extension LLM where Model == LlamaModel {
-    public static func mistral7B(
+    public static func mistral(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -651,21 +558,6 @@ extension LLM where Model == LlamaModel {
             let dir = "Mistral-7B-Instruct-v0.3-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
-    }
-
-    public static func mistralNemo(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<LlamaModel> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
     }
 
     static var mistralNemo: URL {
@@ -805,7 +697,7 @@ extension LLM where Model == Qwen2Model {
         }
     }
 
-    public static func qwen2_5__1_5B(
+    public static func qwen2_5(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -827,21 +719,6 @@ extension LLM where Model == Qwen2Model {
         }
     }
 
-    public static func qwen2_5__7B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Qwen2Model> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
     static var qwen2_5__7B: URL {
         get throws {
             let dir = "Qwen2.5-7B-Instruct-4bit"
@@ -853,7 +730,7 @@ extension LLM where Model == Qwen2Model {
 // MARK: - Qwen3
 
 extension LLM where Model == Qwen3Model {
-    public static func qwen3__0_6B(
+    public static func qwen3(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -875,21 +752,6 @@ extension LLM where Model == Qwen3Model {
         }
     }
 
-    public static func qwen3__1_7B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Qwen3Model> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
     static var qwen3__1_7B: URL {
         get throws {
             let dir = "Qwen3-1.7B-4bit"
@@ -897,41 +759,11 @@ extension LLM where Model == Qwen3Model {
         }
     }
 
-    public static func qwen3_4B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Qwen3Model> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
     static var qwen3_4B: URL {
         get throws {
             let dir = "Qwen3-4B-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
-    }
-
-    public static func qwen3_8B(
-        directory: URL,
-        input: UserInput,
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<Qwen3Model> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
     }
 
     static var qwen3_8B: URL {
@@ -945,7 +777,7 @@ extension LLM where Model == Qwen3Model {
 // MARK: - Qwen3 MoE
 
 extension LLM where Model == Qwen3MoEModel {
-    public static func qwen3_30B(
+    public static func qwen3MoE(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -960,7 +792,7 @@ extension LLM where Model == Qwen3MoEModel {
         )
     }
 
-    static var qwen3_30B: URL {
+    static var qwen3MoE: URL {
         get throws {
             let dir = "Qwen3-30B-A3B-4bit"
             return try Bundle.shllm.directory(named: dir)

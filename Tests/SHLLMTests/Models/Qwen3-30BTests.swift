@@ -13,7 +13,7 @@ struct Qwen3_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_30B(input) else { return }
+        guard let llm = try qwen3MoE(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -31,7 +31,7 @@ struct Qwen3_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_30B(input) else { return }
+        guard let llm = try qwen3MoE(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -47,7 +47,7 @@ struct Qwen3_30BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try qwen3_30B(
+        guard let llm = try qwen3MoE(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -76,12 +76,12 @@ struct Qwen3_30BTests {
     }
 }
 
-private func qwen3_30B(
+private func qwen3MoE(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
 ) throws -> LLM<Qwen3MoEModel>? {
     try loadModel(
-        directory: LLM<Qwen3MoEModel>.qwen3_30B,
+        directory: LLM<Qwen3MoEModel>.qwen3MoE,
         input: input,
         tools: tools
     )
