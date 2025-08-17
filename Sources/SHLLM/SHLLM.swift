@@ -40,6 +40,30 @@ public enum SHLLM {
         return true
     }
 
+    public static func withDefaultDevice<R>(
+        _ device: MLX.DeviceType,
+        _ body: () throws -> R
+    ) rethrows -> R {
+        switch device {
+        case .cpu:
+            try MLX.Device.withDefaultDevice(.cpu, body)
+        case .gpu:
+            try MLX.Device.withDefaultDevice(.gpu, body)
+        }
+    }
+
+    public static func withDefaultDevice<R>(
+        _ device: MLX.DeviceType,
+        _ body: () async throws -> R
+    ) async rethrows -> R {
+        switch device {
+        case .cpu:
+            try await MLX.Device.withDefaultDevice(.cpu, body)
+        case .gpu:
+            try await MLX.Device.withDefaultDevice(.gpu, body)
+        }
+    }
+
     static var assertSupportedDevice: Void {
         get throws {
             guard isSupportedDevice else {
@@ -59,6 +83,8 @@ public enum SHLLM {
 @_exported import protocol MLXLMCommon.ToolProtocol
 
 extension Chat.Message: @retroactive @unchecked Sendable {}
+
+@_exported import enum MLX.DeviceType
 
 @_exported import protocol MLXLMCommon.LanguageModel
 

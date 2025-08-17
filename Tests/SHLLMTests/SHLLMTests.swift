@@ -27,3 +27,70 @@ func recommendedMaxWorkingSetSize() async throws {
     let recommended = SHLLM.recommendedMaxWorkingSetSize
     #expect(recommended > 0)
 }
+
+// NOTE: Running inference on the CPU takes way too long.
+@Test(.enabled(if: false))
+func onCPU() async throws {
+    guard SHLLM.isSupportedDevice else {
+        Swift.print("⚠️ Metal GPU not available")
+        return
+    }
+
+    let input: UserInput = .init(messages: [
+        ["role": "system", "content": "You are a helpful assistant."],
+        ["role": "user", "content": "What is the meaning of life?"],
+    ])
+
+    try await SHLLM.withDefaultDevice(.cpu) {
+        guard let llm = try loadModel(
+            directory: LLM.gemma3_1B,
+            input: input,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        ) as LLM<Gemma3TextModel>? else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        #expect(!response.isEmpty)
+    }
+}
+
+@Test()
+func onGPU() async throws {
+    guard SHLLM.isSupportedDevice else {
+        Swift.print("⚠️ Metal GPU not available")
+        return
+    }
+
+    let input: UserInput = .init(messages: [
+        ["role": "system", "content": "You are a helpful assistant."],
+        ["role": "user", "content": "What is the meaning of life?"],
+    ])
+
+    try await SHLLM.withDefaultDevice(.gpu) {
+        guard let llm = try loadModel(
+            directory: LLM.gemma3_1B,
+            input: input,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<end_of_turn>"]
+                return config
+            }
+        ) as LLM<Gemma3TextModel>? else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        #expect(!response.isEmpty)
+    }
+}
