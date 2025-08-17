@@ -26,6 +26,20 @@ public enum SHLLM {
         }
     }
 
+    public static var recommendedMaxWorkingSetSize: Int {
+        guard let device = MTLCreateSystemDefaultDevice(),
+              device.recommendedMaxWorkingSetSize < Int.max
+        else { return 0 }
+        return Int(device.recommendedMaxWorkingSetSize)
+    }
+
+    public static var isSupportedDevice: Bool {
+        guard let _ = MTLCreateSystemDefaultDevice() else {
+            return false
+        }
+        return true
+    }
+
     public static func withDefaultDevice<R>(
         _ device: MLX.DeviceType,
         _ body: () throws -> R
@@ -48,20 +62,6 @@ public enum SHLLM {
         case .gpu:
             try await MLX.Device.withDefaultDevice(.gpu, body)
         }
-    }
-
-    public static var recommendedMaxWorkingSetSize: Int {
-        guard let device = MTLCreateSystemDefaultDevice(),
-              device.recommendedMaxWorkingSetSize < Int.max
-        else { return 0 }
-        return Int(device.recommendedMaxWorkingSetSize)
-    }
-
-    public static var isSupportedDevice: Bool {
-        guard let _ = MTLCreateSystemDefaultDevice() else {
-            return false
-        }
-        return true
     }
 
     static var assertSupportedDevice: Void {
