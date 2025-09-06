@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.10"
+            from: "0.0.11"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
-            from: "0.1.20"
+            from: "0.1.23"
         ),
     ],
     targets: [
@@ -75,5 +75,6 @@ let package = Package(
                 .copy("Resources/3-authentication-factors.png"),
             ]
         ),
-    ]
+    ],
+    cxxLanguageStandard: .cxx17
 )
