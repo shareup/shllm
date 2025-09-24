@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "SHLLM",
-    platforms: [.iOS(.v16), .macOS(.v14)],
+    platforms: [.iOS(.v16), .macCatalyst(.v16), .macOS(.v14)],
     products: [
         .library(
             name: "SHLLM",
@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.11"
+            from: "0.0.12"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
