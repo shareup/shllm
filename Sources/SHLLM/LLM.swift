@@ -9,6 +9,8 @@ import MLXNN
 import MLXVLM
 import Tokenizers
 
+public let sharedModelCache = ModelCache()
+
 public struct LLM<Model: LanguageModel>: AsyncSequence {
     public enum Response {
         case text(String)
@@ -25,6 +27,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
     private let customConfiguration: CustomConfiguration?
+    private let useCache: Bool
 
     public init(
         directory: URL,
@@ -33,7 +36,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
-        customConfiguration: CustomConfiguration? = nil
+        customConfiguration: CustomConfiguration? = nil,
+        useCache: Bool = true
     ) {
         self.directory = directory
         let input = {
@@ -51,6 +55,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
         self.customConfiguration = customConfiguration
+        self.useCache = useCache
     }
 
     public func makeAsyncIterator() -> AsyncIterator {
@@ -60,7 +65,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: customConfiguration
+            customConfiguration: customConfiguration,
+            useCache: useCache
         )
     }
 
@@ -71,6 +77,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
         private let customConfiguration: CustomConfiguration?
+        private let useCache: Bool
 
         private var state: State
 
@@ -91,7 +98,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
-            customConfiguration: CustomConfiguration? = nil
+            customConfiguration: CustomConfiguration? = nil,
+            useCache: Bool = true
         ) {
             self.directory = directory
             self.input = input
@@ -99,6 +107,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             self.maxOutputTokenCount = maxOutputTokenCount
             self.customConfiguration = customConfiguration
             self.tools = tools
+            self.useCache = useCache
             state = .initial
         }
 
@@ -106,23 +115,37 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             switch state {
             case .initial:
                 do {
-                    try SHLLM.assertSupportedDevice
-                    let factory = try await loadModel(directory: directory)
+                    let baseContext: ModelContext
+                    if useCache {
+                        baseContext = try await sharedModelCache.getOrLoadModel(
+                            type: Model.self,
+                            directory: directory,
+                            customConfiguration: customConfiguration
+                        )
+                    } else {
+                        try SHLLM.assertSupportedDevice
+                        let factory = try await loadModel(directory: directory)
+                        let config = customConfiguration?(factory.configuration)
+                            ?? factory.configuration
+                        baseContext = ModelContext(
+                            configuration: config,
+                            model: factory.model,
+                            processor: factory.processor,
+                            tokenizer: factory.tokenizer
+                        )
+                    }
 
                     let wrappedProcessor = TruncatingUserInputProcessor(
-                        wrapping: factory.processor,
-                        tokenizer: factory.tokenizer,
+                        wrapping: baseContext.processor,
+                        tokenizer: baseContext.tokenizer,
                         maxInputTokenCount: maxInputTokenCount
                     )
 
-                    let config = customConfiguration?(factory.configuration)
-                        ?? factory.configuration
-
                     let context = ModelContext(
-                        configuration: config,
-                        model: factory.model,
+                        configuration: baseContext.configuration,
+                        model: baseContext.model,
                         processor: wrappedProcessor,
-                        tokenizer: factory.tokenizer
+                        tokenizer: baseContext.tokenizer
                     )
                     state = .loaded(context)
                     return try await next()
