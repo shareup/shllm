@@ -107,11 +107,11 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             switch state {
             case .initial:
                 do {
-                    let context = try await SHLLM.modelCache.getOrLoadModel(
+                    let context = try await loadModelContext(
                         directory: directory,
                         maxInputTokenCount: maxInputTokenCount,
                         customConfiguration: customConfiguration
-                    ).value
+                    )
 
                     state = .loaded(context)
                     return try await next()

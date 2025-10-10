@@ -3,17 +3,20 @@ import Foundation
 import Metal
 import MLX
 
-private let cache = ModelCache()
-
 public enum SHLLM {
-    static var modelCache: ModelCache {
-        cache
+    public static var isModelCacheEnabled: Bool {
+        get { ModelCache.isEnabled }
+        set {
+            if newValue {
+                ModelCache.enable()
+            } else {
+                ModelCache.disable()
+            }
+        }
     }
 
     public static func clearCache() {
-        Task {
-            await modelCache.clear()
-        }
+        ModelCache.clear()
         MLX.GPU.clearCache()
     }
 

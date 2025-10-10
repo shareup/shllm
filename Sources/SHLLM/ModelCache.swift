@@ -1,112 +1,117 @@
-import AsyncExtensions
 import Foundation
 import MLXLMCommon
+import Synchronized
 
-struct CachedModel {
-    let directory: URL
-    let contex: ModelContext
-}
-
-struct Loader {
-    let future: AsyncThrowingFuture<ModelContext>
-    let work: () async throws -> CachedModel
-    var task: Task<CachedModel, Error>?
-}
-
-actor ModelCache {
-    var currentCache: CachedModel?
-    var isWorking = false
-    var loaders: [Loader] = []
-
-    func next() async throws {
-        if isWorking { return }
-
-        guard !loaders.isEmpty else {
-            return
+func loadModelContext(
+    directory: URL,
+    maxInputTokenCount: Int?,
+    customConfiguration: ((ModelConfiguration) -> ModelConfiguration)?
+) async throws -> ModelContext {
+    let model = cache.access { modelCache -> CachedModel? in
+        guard let model = modelCache.matching(directory: directory) else {
+            // NOTE: Since we're going to be replacing this cached model,
+            //       we may as well release our reference to it. If a client
+            //       is still using it, their strong reference to the model
+            //       will keep it alive as long as needed.
+            modelCache.clear()
+            return nil
         }
-
-        var loader = loaders.removeFirst()
-
-        isWorking = true
-        defer { isWorking = false }
-
-        loader.task = Task {
-            try await loader.work()
-        }
-
-        let cached = try await loader.task!.value
-        loader.future.resolve(cached.contex)
-
-        try await next()
+        return model
     }
 
-    func clear() {
-        for loader in loaders {
-            loader.future.fail(CancellationError())
-            loader.task?.cancel()
-        }
-        currentCache = nil
+    if let model {
+        return model.context
+    } else {
+        try SHLLM.assertSupportedDevice
+        let baseContext = try await loadModel(directory: directory)
+
+        let config = customConfiguration?(baseContext.configuration)
+            ?? baseContext.configuration
+
+        let processor = TruncatingUserInputProcessor(
+            wrapping: baseContext.processor,
+            tokenizer: baseContext.tokenizer,
+            maxInputTokenCount: maxInputTokenCount
+        )
+
+        let context = ModelContext(
+            configuration: config,
+            model: baseContext.model,
+            processor: processor,
+            tokenizer: baseContext.tokenizer
+        )
+
+        let model = CachedModel(
+            directory: directory,
+            context: context
+        )
+        cache.access { $0.replace(with: model) }
+
+        return context
     }
+}
 
-    func getOrLoadModel(
-        directory: URL,
-        maxInputTokenCount: Int?,
-        customConfiguration: ((ModelConfiguration) -> ModelConfiguration)?
-    ) async throws -> AsyncThrowingFuture<ModelContext> {
-        let future = AsyncThrowingFuture<ModelContext>()
-
-        let work = { () async throws in
-            try await self.realGetOrLoadModel(
-                directory: directory,
-                maxInputTokenCount: maxInputTokenCount,
-                customConfiguration: customConfiguration
-            )
-        }
-
-        loaders.append(Loader(future: future, work: work))
-
-        if loaders.count == 1 {
-            Task {
-                try await self.next()
+enum ModelCache {
+    static var isEnabled: Bool {
+        cache.access { cache in
+            switch cache {
+            case .disabled: false
+            case .enabled: true
             }
         }
-
-        return future
     }
 
-    func realGetOrLoadModel(
-        directory: URL,
-        maxInputTokenCount: Int?,
-        customConfiguration: ((ModelConfiguration) -> ModelConfiguration)?
-    ) async throws -> CachedModel {
-        let model: CachedModel
+    static func enable() {
+        cache.access { $0.enable() }
+    }
 
-        if let currentCache, currentCache.directory == directory {
-            model = currentCache
-        } else {
-            try SHLLM.assertSupportedDevice
-            let baseContext = try await loadModel(directory: directory)
+    static func disable() {
+        cache.access { $0.disable() }
+    }
 
-            let config = customConfiguration?(baseContext.configuration) ?? baseContext
-                .configuration
+    static func clear() { cache.access { $0.clear() } }
+}
 
-            let processor = TruncatingUserInputProcessor(
-                wrapping: baseContext.processor,
-                tokenizer: baseContext.tokenizer,
-                maxInputTokenCount: maxInputTokenCount
-            )
+private let cache = Locked<Cache>(.enabled(nil))
 
-            let context = ModelContext(
-                configuration: config,
-                model: baseContext.model,
-                processor: processor,
-                tokenizer: baseContext.tokenizer
-            )
+private struct CachedModel {
+    let directory: URL
+    let context: ModelContext
+}
 
-            model = CachedModel(directory: directory, contex: context)
+private enum Cache {
+    case disabled
+    case enabled(CachedModel?)
+
+    mutating func enable() {
+        switch self {
+        case .disabled: self = .enabled(nil)
+        case .enabled: break
         }
+    }
 
-        currentCache = model
-        return model
+    mutating func disable() {
+        self = .disabled
+    }
+
+    func matching(directory: URL) -> CachedModel? {
+        guard case let .enabled(cachedModel) = self,
+              cachedModel?.directory == directory
+        else { return nil }
+        return cachedModel
+    }
+
+    mutating func replace(with model: CachedModel) {
+        switch self {
+        case .disabled: break
+        case .enabled: self = .enabled(model)
+        }
+    }
+
+    mutating func clear() {
+        switch self {
+        case .disabled: break
+        case .enabled: self = .enabled(nil)
+        }
     }
 }
