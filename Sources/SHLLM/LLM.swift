@@ -1,5 +1,4 @@
 import AsyncAlgorithms
-import AsyncExtensions
 import CoreGraphics
 import Foundation
 import Metal
