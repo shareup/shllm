@@ -24,8 +24,8 @@ let package = Package(
             from: "0.1.23"
         ),
         .package(
-            url: "https://github.com/shareup/async-extensions",
-            from: "4.4.0"
+            url: "https://github.com/shareup/synchronized.git",
+            from: "4.0.1"
         ),
     ],
     targets: [
@@ -33,10 +33,10 @@ let package = Package(
             name: "SHLLM",
             dependencies: [
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
-                .product(name: "AsyncExtensions", package: "async-extensions"),
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
                 .product(name: "MLXVLM", package: "mlx-swift-examples"),
+                .product(name: "Synchronized", package: "synchronized"),
                 .product(
                     name: "Transformers",
                     package: "swift-transformers",

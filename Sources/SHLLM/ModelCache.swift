@@ -69,7 +69,9 @@ enum ModelCache {
         cache.access { $0.disable() }
     }
 
-    static func clear() { cache.access { $0.clear() } }
+    static func clear() {
+        cache.access { $0.clear() }
+    }
 }
 
 private let cache = Locked<Cache>(.enabled(nil))
