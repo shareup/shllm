@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "async-extensions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/shareup/async-extensions",
+      "state" : {
+        "revision" : "3088474141debc75b78257a0db28adf734bcea0f",
+        "version" : "4.4.0"
+      }
+    },
+    {
       "identity" : "gzipswift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/1024jp/GzipSwift",
@@ -79,6 +88,15 @@
       "state" : {
         "revision" : "ed54f3c9589d6cdc6fc2bb810e4809b0735fee01",
         "version" : "0.1.23"
+      }
+    },
+    {
+      "identity" : "synchronized",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/shareup/synchronized",
+      "state" : {
+        "revision" : "85653e23270ec88ae19f8d494157769487e34aed",
+        "version" : "4.0.1"
       }
     }
   ],

@@ -23,12 +23,17 @@ let package = Package(
             url: "https://github.com/huggingface/swift-transformers",
             from: "0.1.23"
         ),
+        .package(
+            url: "https://github.com/shareup/async-extensions",
+            from: "4.4.0"
+        ),
     ],
     targets: [
         .target(
             name: "SHLLM",
             dependencies: [
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
+                .product(name: "AsyncExtensions", package: "async-extensions"),
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
                 .product(name: "MLXVLM", package: "mlx-swift-examples"),

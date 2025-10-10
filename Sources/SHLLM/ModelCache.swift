@@ -1,47 +1,112 @@
+import AsyncExtensions
 import Foundation
 import MLXLMCommon
 
-public actor ModelCache {
-    private var cachedContext: (key: String, context: ModelContext)?
+struct CachedModel {
+    let directory: URL
+    let contex: ModelContext
+}
 
-    public init() {}
+struct Loader {
+    let future: AsyncThrowingFuture<ModelContext>
+    let work: () async throws -> CachedModel
+    var task: Task<CachedModel, Error>?
+}
 
-    public func getOrLoadModel(
-        type _: (some LanguageModel).Type,
+actor ModelCache {
+    var currentCache: CachedModel?
+    var isWorking = false
+    var loaders: [Loader] = []
+
+    func next() async throws {
+        if isWorking { return }
+
+        guard !loaders.isEmpty else {
+            return
+        }
+
+        var loader = loaders.removeFirst()
+
+        isWorking = true
+        defer { isWorking = false }
+
+        loader.task = Task {
+            try await loader.work()
+        }
+
+        let cached = try await loader.task!.value
+        loader.future.resolve(cached.contex)
+
+        try await next()
+    }
+
+    func clear() {
+        for loader in loaders {
+            loader.future.fail(CancellationError())
+            loader.task?.cancel()
+        }
+        currentCache = nil
+    }
+
+    func getOrLoadModel(
         directory: URL,
+        maxInputTokenCount: Int?,
         customConfiguration: ((ModelConfiguration) -> ModelConfiguration)?
-    ) async throws -> ModelContext {
-        let key = directory.path
+    ) async throws -> AsyncThrowingFuture<ModelContext> {
+        let future = AsyncThrowingFuture<ModelContext>()
 
-        if let cached = cachedContext, cached.key == key {
-            return cached.context
+        let work = { () async throws in
+            try await self.realGetOrLoadModel(
+                directory: directory,
+                maxInputTokenCount: maxInputTokenCount,
+                customConfiguration: customConfiguration
+            )
         }
 
-        if cachedContext != nil {
-            cachedContext = nil
+        loaders.append(Loader(future: future, work: work))
+
+        if loaders.count == 1 {
+            Task {
+                try await self.next()
+            }
         }
 
-        try SHLLM.assertSupportedDevice
-        let factory = try await loadModel(directory: directory)
-
-        let config = customConfiguration?(factory.configuration) ?? factory.configuration
-
-        let context = ModelContext(
-            configuration: config,
-            model: factory.model,
-            processor: factory.processor,
-            tokenizer: factory.tokenizer
-        )
-
-        cachedContext = (key: key, context: context)
-        return context
+        return future
     }
 
-    public func isModelCached(directory: URL) -> Bool {
-        cachedContext?.key == directory.path
-    }
+    func realGetOrLoadModel(
+        directory: URL,
+        maxInputTokenCount: Int?,
+        customConfiguration: ((ModelConfiguration) -> ModelConfiguration)?
+    ) async throws -> CachedModel {
+        let model: CachedModel
 
-    public func clearCache() {
-        cachedContext = nil
+        if let currentCache, currentCache.directory == directory {
+            model = currentCache
+        } else {
+            try SHLLM.assertSupportedDevice
+            let baseContext = try await loadModel(directory: directory)
+
+            let config = customConfiguration?(baseContext.configuration) ?? baseContext
+                .configuration
+
+            let processor = TruncatingUserInputProcessor(
+                wrapping: baseContext.processor,
+                tokenizer: baseContext.tokenizer,
+                maxInputTokenCount: maxInputTokenCount
+            )
+
+            let context = ModelContext(
+                configuration: config,
+                model: baseContext.model,
+                processor: processor,
+                tokenizer: baseContext.tokenizer
+            )
+
+            model = CachedModel(directory: directory, contex: context)
+        }
+
+        currentCache = model
+        return model
     }
 }
