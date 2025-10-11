@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.12"
+            from: "0.0.13"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
-            from: "0.1.23"
+            from: "1.0.0"
         ),
         .package(
             url: "https://github.com/shareup/synchronized.git",
