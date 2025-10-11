@@ -80,6 +80,15 @@
         "revision" : "ed54f3c9589d6cdc6fc2bb810e4809b0735fee01",
         "version" : "0.1.23"
       }
+    },
+    {
+      "identity" : "synchronized",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/shareup/synchronized",
+      "state" : {
+        "revision" : "85653e23270ec88ae19f8d494157769487e34aed",
+        "version" : "4.0.1"
+      }
     }
   ],
   "version" : 2

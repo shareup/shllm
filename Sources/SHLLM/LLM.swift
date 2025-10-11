@@ -106,24 +106,12 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             switch state {
             case .initial:
                 do {
-                    try SHLLM.assertSupportedDevice
-                    let factory = try await loadModel(directory: directory)
-
-                    let wrappedProcessor = TruncatingUserInputProcessor(
-                        wrapping: factory.processor,
-                        tokenizer: factory.tokenizer,
-                        maxInputTokenCount: maxInputTokenCount
+                    let context = try await loadModelContext(
+                        directory: directory,
+                        maxInputTokenCount: maxInputTokenCount,
+                        customConfiguration: customConfiguration
                     )
 
-                    let config = customConfiguration?(factory.configuration)
-                        ?? factory.configuration
-
-                    let context = ModelContext(
-                        configuration: config,
-                        model: factory.model,
-                        processor: wrappedProcessor,
-                        tokenizer: factory.tokenizer
-                    )
                     state = .loaded(context)
                     return try await next()
                 } catch {

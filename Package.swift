@@ -23,6 +23,10 @@ let package = Package(
             url: "https://github.com/huggingface/swift-transformers",
             from: "0.1.23"
         ),
+        .package(
+            url: "https://github.com/shareup/synchronized.git",
+            from: "4.0.1"
+        ),
     ],
     targets: [
         .target(
@@ -32,6 +36,7 @@ let package = Package(
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
                 .product(name: "MLXVLM", package: "mlx-swift-examples"),
+                .product(name: "Synchronized", package: "synchronized"),
                 .product(
                     name: "Transformers",
                     package: "swift-transformers",

@@ -4,7 +4,19 @@ import Metal
 import MLX
 
 public enum SHLLM {
+    public static var isModelCacheEnabled: Bool {
+        get { ModelCache.isEnabled }
+        set {
+            if newValue {
+                ModelCache.enable()
+            } else {
+                ModelCache.disable()
+            }
+        }
+    }
+
     public static func clearCache() {
+        ModelCache.clear()
         MLX.GPU.clearCache()
     }
 
