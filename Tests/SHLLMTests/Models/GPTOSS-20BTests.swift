@@ -5,7 +5,7 @@ import MLXLMCommon
 import Testing
 
 @Suite(.serialized)
-struct GPTOSS__20BTests {
+struct GPTOSS_20BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct GPTOSS__20BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try gptOSS__20B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -31,7 +31,7 @@ struct GPTOSS__20BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try gptOSS__20B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -47,7 +47,7 @@ struct GPTOSS__20BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try gptOSS__20B(
+        guard let llm = try gptOSS_20B(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -76,7 +76,7 @@ struct GPTOSS__20BTests {
     }
 }
 
-private func gptOSS__20B(
+private func gptOSS_20B(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
 ) throws -> LLM<GPTOSSModel>? {
