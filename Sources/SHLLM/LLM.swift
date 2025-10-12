@@ -454,6 +454,32 @@ extension LLM where Model == Gemma3 {
     }
 }
 
+// MARK: - GPT-OSS
+
+extension LLM where Model == GPTOSSModel {
+    public static func gptOSS(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<GPTOSSModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var gptOSS_20B_8bit: URL {
+        get throws {
+            let dir = "gpt-oss-20b-MLX-8bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
 // MARK: - Llama
 
 extension LLM where Model == LlamaModel {
