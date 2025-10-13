@@ -174,6 +174,35 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             }
         }
     }
+
+    public var result: (reasoning: String?, text: String?, toolCalls: [ToolCall]?) {
+        get async throws {
+            var reasoning = ""
+            var text = ""
+            var toolCall: [ToolCall] = []
+
+            for try await response in self {
+                switch response {
+                case let .reasoning(part):
+                    reasoning += part
+                case let .text(part):
+                    text += part
+                case let .toolCall(part):
+                    toolCall.append(part)
+                }
+            }
+
+            let whitespace = CharacterSet.whitespacesAndNewlines
+            reasoning = reasoning.trimmingCharacters(in: whitespace)
+            text = text.trimmingCharacters(in: whitespace)
+
+            return (
+                reasoning: reasoning.isEmpty ? nil : reasoning,
+                text: text.isEmpty ? nil : text,
+                toolCalls: toolCall.isEmpty ? nil : toolCall
+            )
+        }
+    }
 }
 
 public extension LLM {
