@@ -27,7 +27,33 @@ public extension LLM {
 }
 
 public extension LLM where Model == Qwen2Model {
-    static var deepSeekR1Parser: ResponseParser = defaultThinkingParser
+    static var deepSeekR1Parser: ResponseParser {
+        // NOTE: DeepSeek R1 starts in thinking mode.
+        let isThinking = Locked(true)
+        let tokensToIgnore = Set(["<think>", "<think>\n"])
+        let end = Set(["</think>", "</think>\n"])
+        return ResponseParser { (generation: Generation) -> Response? in
+            switch generation {
+            case let .chunk(chunk):
+                if tokensToIgnore.contains(chunk) {
+                    return nil
+                } else if end.contains(chunk) {
+                    isThinking.access { $0 = false }
+                    return nil
+                } else if isThinking.access({ $0 }) {
+                    return .reasoning(chunk)
+                } else {
+                    return .text(chunk)
+                }
+
+            case let .toolCall(toolCall):
+                return .toolCall(toolCall)
+
+            case .info:
+                return nil
+            }
+        }
+    }
 }
 
 public extension LLM where Model == Qwen3Model {
