@@ -1,5 +1,8 @@
 import Foundation
+import class MLXLLM.GPTOSSModel
+import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
+import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
 import Synchronized
 
