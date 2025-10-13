@@ -52,12 +52,15 @@ struct Qwen3__1_7BTests {
             tools: [weatherTool]
         ) else { return }
 
+        var reasoning = ""
         var reply = ""
         var toolCallCount = 0
         var weatherLocationFound = false
 
         for try await response in llm {
             switch response {
+            case let .reasoning(text):
+                reasoning.append(text)
             case let .text(text):
                 reply.append(text)
             case let .toolCall(toolCall):
@@ -70,7 +73,8 @@ struct Qwen3__1_7BTests {
             }
         }
 
-        #expect(!reply.isEmpty)
+        #expect(!reasoning.isEmpty)
+        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount == 1)
         #expect(weatherLocationFound)
     }
@@ -83,6 +87,7 @@ private func qwen3__1_7B(
     try loadModel(
         directory: LLM<Qwen3Model>.qwen3__1_7B,
         input: input,
-        tools: tools
+        tools: tools,
+        responseParser: LLM<Qwen3Model>.qwen3Parser
     )
 }

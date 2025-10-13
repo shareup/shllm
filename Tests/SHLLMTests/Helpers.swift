@@ -8,7 +8,8 @@ func loadModel<M: LanguageModel>(
     processing: @autoclosure (() -> UserInput.Processing?) = nil,
     tools: [any ToolProtocol] = [],
     maxOutputTokenCount: @autoclosure () -> Int? = nil,
-    customConfiguration: LLM.CustomConfiguration? = nil
+    customConfiguration: LLM.CustomConfiguration? = nil,
+    responseParser: LLM<M>.ResponseParser = LLM<M>.defaultParser
 ) throws -> LLM<M>? {
     #if targetEnvironment(simulator)
         Swift.print("⚠️ LLMs are not supported in the Simulator")
@@ -21,7 +22,8 @@ func loadModel<M: LanguageModel>(
                 processing: processing(),
                 tools: tools,
                 maxOutputTokenCount: maxOutputTokenCount(),
-                customConfiguration: customConfiguration
+                customConfiguration: customConfiguration,
+                responseParser: responseParser
             )
         } catch let SHLLMError.directoryNotFound(name) {
             Swift.print("⚠️ \(name) does not exist")
