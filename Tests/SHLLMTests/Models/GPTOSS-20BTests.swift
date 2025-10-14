@@ -90,7 +90,6 @@ struct GPTOSS_20BTests {
         var finalText = ""
 
         for try await response in llm {
-            Swift.print("$$$", response)
             switch response {
             case let .reasoning(content):
                 reasoning += content
@@ -152,6 +151,7 @@ private func gptOSS_20B(
     try loadModel(
         directory: LLM<GPTOSSModel>.gptOSS_20B_8bit,
         input: input,
-        tools: tools
+        tools: tools,
+        responseParser: LLM<GPTOSSModel>.gptOSSParser
     )
 }

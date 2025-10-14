@@ -488,14 +488,17 @@ extension LLM where Model == GPTOSSModel {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser = Self.gptOSSParser
     ) throws -> LLM<GPTOSSModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: nil,
+            responseParser: responseParser
         )
     }
 
