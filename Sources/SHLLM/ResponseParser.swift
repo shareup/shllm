@@ -74,15 +74,8 @@ public extension LLM where Model == GPTOSSModel {
         let parser = Locked(Harmony.StreamableParser(
             startingRole: .assistant
         ))
-        let chunks = Locked([String]())
         return ResponseParser { (generation: Generation) -> Response? in
             parser.access { parser -> Response? in
-                if case let .chunk(text) = generation {
-                    chunks.access { $0.append(text) }
-                } else if case .info = generation {
-                    Swift.print("$$$", chunks.access { $0 })
-                }
-
                 // NOTE: LLMs are happy to go on and on even after responding
                 //       with a tool call token. So, we need to check if the
                 //       last token was a tool call token. If it was a tool
