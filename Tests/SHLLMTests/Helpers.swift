@@ -99,3 +99,74 @@ let weatherTool = Tool<WeatherArguments, WeatherResponse>(
 ) { _ in
     WeatherResponse(temperature: 22.0, conditions: "Sunny")
 }
+
+struct StockArguments: Codable, CustomStringConvertible, Hashable, Sendable {
+    var symbol: String
+
+    init(symbol: String) {
+        self.symbol = symbol
+    }
+
+    var description: String {
+        "'\(symbol)'"
+    }
+}
+
+struct StockResponse: Codable, Hashable, Sendable {
+    let price: Double
+}
+
+let stockTool = Tool<StockArguments, StockResponse>(
+    name: "get_stock_price",
+    description: "Get the current price of a stock",
+    parameters: [
+        .required(
+            "symbol",
+            type: .string,
+            description: "The stock symbol, e.g. AAPL"
+        ),
+    ]
+) { _ in
+    StockResponse(price: 150.0)
+}
+
+struct NewsArguments: Codable, CustomStringConvertible, Hashable, Sendable {
+    var query: String
+    var sortBy: String?
+
+    init(query: String, sortBy: String? = nil) {
+        self.query = query
+        self.sortBy = sortBy
+    }
+
+    var description: String {
+        "'\(query)', sortBy: \(sortBy ?? "nil")"
+    }
+}
+
+struct NewsResponse: Codable, Hashable, Sendable {
+    let headlines: [String]
+}
+
+let newsTool = Tool<NewsArguments, NewsResponse>(
+    name: "get_latest_news",
+    description: "Get the latest news headlines",
+    parameters: [
+        .required(
+            "query",
+            type: .string,
+            description: "The search query for news headlines"
+        ),
+        .optional(
+            "sortBy",
+            type: .string,
+            description: "Sort by 'relevancy' or 'popularity'",
+            extraProperties: ["enum": ["relevancy", "popularity"]]
+        ),
+    ]
+) { _ in
+    NewsResponse(headlines: [
+        "Apple announces new iPhone",
+        "Microsoft releases new Surface Pro",
+    ])
+}

@@ -487,7 +487,7 @@ struct TruncatingUserInputProcessorTests {
     }
 }
 
-private class NaiveTokenizer: Tokenizer {
+private final class NaiveTokenizer: Tokenizer {
     func tokenize(text: String) -> [String] {
         text.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }

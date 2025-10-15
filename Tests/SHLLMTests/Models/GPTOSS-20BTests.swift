@@ -129,6 +129,90 @@ struct GPTOSS_20BTests {
         #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
     }
+
+    @Test
+    func canChooseBetweenDifferentTools() async throws {
+        let input = UserInput(chat: [
+            .system(
+                "You are a helpful assistant that can provide weather, stock prices, and news."
+            ),
+            .user("Get the latest news about Apple, sorted by popularity."),
+        ])
+
+        guard let llm = try gptOSS_20B(
+            input,
+            tools: [weatherTool, stockTool, newsTool]
+        ) else { return }
+
+        var reasoning = ""
+        var reply = ""
+        var toolCallCount = 0
+        var newsQueryFound = false
+        var newsSortByFound = false
+
+        for try await response in llm {
+            switch response {
+            case let .reasoning(text):
+                reasoning.append(text)
+            case let .text(text):
+                reply.append(text)
+            case let .toolCall(toolCall):
+                toolCallCount += 1
+                #expect(toolCall.function.name == "get_latest_news")
+
+                if case let .string(query) = toolCall.function.arguments["query"] {
+                    newsQueryFound = query.lowercased().contains("apple")
+                }
+                if case let .string(sortBy) = toolCall.function.arguments["sortBy"] {
+                    newsSortByFound = sortBy.lowercased().contains("popularity")
+                }
+            }
+        }
+
+        #expect(!reasoning.isEmpty)
+        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        #expect(toolCallCount >= 1)
+        #expect(newsQueryFound)
+        #expect(newsSortByFound)
+    }
+
+    @Test
+    func canUseStockToolAndRespond() async throws {
+        let chat: [Chat.Message] = [
+            .system(
+                "You are a helpful assistant that can provide stock prices. When asked for a stock price, you must use the get_stock_price tool."
+            ),
+            .user("What is the price of AAPL?"),
+        ]
+
+        var input = UserInput(chat: chat)
+
+        guard let llm1 = try gptOSS_20B(
+            input,
+            tools: [stockTool]
+        ) else { return }
+
+        let (reasoning, text, toolCallOpt) = try await llm1.result
+        let toolCall = try #require(toolCallOpt)
+
+        #expect(reasoning != nil)
+        #expect(text == nil)
+        #expect(toolCall.function.name == "get_stock_price")
+        #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
+
+        input.appendHarmonyAssistantToolCall(toolCall)
+        input.appendHarmonyToolResult(["price": 123.45])
+        guard let llm2 = try gptOSS_20B(
+            input,
+            tools: [stockTool]
+        ) else { return }
+
+        let result = try await llm2.text.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+        #expect(result.lowercased().contains("aapl"))
+        #expect(result.contains("123.45"))
+    }
 }
 
 private func gptOSS_20B(
@@ -139,6 +223,11 @@ private func gptOSS_20B(
         directory: LLM<GPTOSSModel>.gptOSS_20B_8bit,
         input: input,
         tools: tools,
+        customConfiguration: { config in
+            var config = config
+            config.extraEOSTokens = ["<|call|>"]
+            return config
+        },
         responseParser: LLM<GPTOSSModel>.gptOSSParser
     )
 }

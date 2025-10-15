@@ -147,12 +147,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         continue
                     }
 
-                    if case .toolCall = next {
-                        state = .finished
-                    } else {
-                        state = .streaming(stream, iterator)
-                    }
-
+                    state = .streaming(stream, iterator)
                     return next
                 } while true
 
@@ -173,12 +168,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         continue
                     }
 
-                    if case .toolCall = next {
-                        state = .finished
-                    } else {
-                        state = .streaming(stream, iterator)
-                    }
-
+                    state = .streaming(stream, iterator)
                     return next
                 } while true
             }
@@ -198,11 +188,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 case let .text(part):
                     text += part
                 case let .toolCall(part):
+                    assert(toolCall == nil)
                     toolCall = part
-                    // NOTE: We should always stop inference after receiving
-                    //       a tool call. Inference should continue once
-                    //       the tool call's result is ready and provided to
-                    //       the LLM.
                 }
             }
 

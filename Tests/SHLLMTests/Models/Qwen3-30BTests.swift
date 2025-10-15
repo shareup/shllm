@@ -129,6 +129,44 @@ struct Qwen3_30BTests {
         #expect(toolCallCount == 1)
         #expect(weatherLocationFound)
     }
+
+    @Test
+    func canUseStockToolAndRespond() async throws {
+        let chat: [Chat.Message] = [
+            .system(
+                "You are a helpful assistant that can provide stock prices. When asked for a stock price, you must use the get_stock_price tool."
+            ),
+            .user("What is the price of AAPL?"),
+        ]
+
+        var input = UserInput(chat: chat)
+
+        guard let llm1 = try qwen3MoE(
+            input,
+            tools: [stockTool]
+        ) else { return }
+
+        let (reasoning, text, toolCallOpt) = try await llm1.result
+        let toolCall = try #require(toolCallOpt)
+
+        #expect(reasoning != nil)
+        #expect(text == nil)
+        #expect(toolCall.function.name == "get_stock_price")
+        #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
+
+        input.appendToolResult(["price": 123.45])
+
+        guard let llm2 = try qwen3MoE(
+            input,
+            tools: [stockTool]
+        ) else { return }
+
+        let result = try await llm2.text.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+        #expect(result.lowercased().contains("aapl"))
+        #expect(result.contains("123.45"))
+    }
 }
 
 private func qwen3MoE(
