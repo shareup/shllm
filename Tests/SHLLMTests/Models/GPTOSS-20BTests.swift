@@ -15,6 +15,35 @@ struct GPTOSS_20BTests {
 
         guard let llm = try gptOSS_20B(input) else { return }
 
+        var reasoning = ""
+        var result = ""
+        for try await reply in llm {
+            switch reply {
+            case let .reasoning(text):
+                reasoning.append(text)
+            case let .text(text):
+                result.append(text)
+            case .toolCall:
+                Issue.record()
+            }
+        }
+
+        Swift.print("<think>\n\(reasoning)\n</think>")
+        #expect(!reasoning.isEmpty)
+
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canStreamTextResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try gptOSS_20B(input) else { return }
+
         var result = ""
         for try await reply in llm.text {
             result.append(reply)
@@ -26,6 +55,28 @@ struct GPTOSS_20BTests {
 
     @Test
     func canAwaitResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try gptOSS_20B(input) else { return }
+
+        let (_reasoning, _text, toolCalls) = try await llm.result
+
+        let reasoning = try #require(_reasoning)
+        Swift.print("<think>\n\(reasoning)\n</think>")
+        #expect(!reasoning.isEmpty)
+
+        let text = try #require(_text)
+        Swift.print(text)
+        #expect(!text.isEmpty)
+
+        #expect(toolCalls == nil)
+    }
+
+    @Test
+    func canAwaitTextResult() async throws {
         let input: UserInput = .init(messages: [
             ["role": "system", "content": "You are a helpful assistant."],
             ["role": "user", "content": "What is the meaning of life?"],
@@ -52,12 +103,15 @@ struct GPTOSS_20BTests {
             tools: [weatherTool]
         ) else { return }
 
+        var reasoning = ""
         var reply = ""
         var toolCallCount = 0
         var weatherLocationFound = false
 
         for try await response in llm {
             switch response {
+            case let .reasoning(text):
+                reasoning.append(text)
             case let .text(text):
                 reply.append(text)
             case let .toolCall(toolCall):
@@ -67,80 +121,13 @@ struct GPTOSS_20BTests {
                 if case let .string(location) = toolCall.function.arguments["location"] {
                     weatherLocationFound = location.lowercased().contains("paris")
                 }
-            case .reasoning:
-                break
             }
         }
-
-        #expect(!reply.isEmpty)
-        #expect(toolCallCount >= 1)
-        #expect(weatherLocationFound)
-    }
-
-    @Test
-    func canSeparateReasoningFromFinalOutput() async throws {
-        let input: UserInput = .init(messages: [
-            ["role": "system", "content": "You are a helpful assistant."],
-            ["role": "user", "content": "What is the meaning of life?"],
-        ])
-
-        guard let llm = try gptOSS_20B(input) else { return }
-
-        var reasoning = ""
-        var finalText = ""
-
-        for try await response in llm {
-            switch response {
-            case let .reasoning(content):
-                reasoning += content
-            case let .text(content):
-                finalText += content
-            case .toolCall:
-                break
-            }
-        }
-
-        Swift.print("Reasoning: \(reasoning)")
-        Swift.print("Final text: \(finalText)")
 
         #expect(!reasoning.isEmpty)
-        #expect(!finalText.isEmpty)
-    }
-
-//    @Test
-//    func canStreamReasoningOnly() async throws {
-//        let input: UserInput = .init(messages: [
-//            ["role": "system", "content": "You are a helpful assistant."],
-//            ["role": "user", "content": "What is the meaning of life?"],
-//        ])
-//
-//        guard let llm = try gptOSS_20B(input) else { return }
-//
-//        var reasoning = ""
-//        for try await chunk in llm.reasoning {
-//            reasoning += chunk
-//        }
-//
-//        Swift.print("Reasoning only: \(reasoning)")
-//        #expect(!reasoning.isEmpty)
-//    }
-
-    @Test
-    func canStreamTextOnly() async throws {
-        let input: UserInput = .init(messages: [
-            ["role": "system", "content": "You are a helpful assistant."],
-            ["role": "user", "content": "What is the meaning of life?"],
-        ])
-
-        guard let llm = try gptOSS_20B(input) else { return }
-
-        var text = ""
-        for try await chunk in llm.text {
-            text += chunk
-        }
-
-        Swift.print("Text only: \(text)")
-        #expect(!text.isEmpty)
+        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        #expect(toolCallCount >= 1)
+        #expect(weatherLocationFound)
     }
 }
 

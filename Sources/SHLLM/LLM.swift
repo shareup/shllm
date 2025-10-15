@@ -9,13 +9,13 @@ import MLXNN
 import MLXVLM
 import Tokenizers
 
-public struct LLM<Model: LanguageModel>: AsyncSequence {
-    public enum Response {
-        case reasoning(String)
-        case text(String)
-        case toolCall(ToolCall)
-    }
+public enum Response {
+    case reasoning(String)
+    case text(String)
+    case toolCall(ToolCall)
+}
 
+public struct LLM<Model: LanguageModel>: AsyncSequence {
     public typealias Element = Response
     public typealias CustomConfiguration =
         (ModelConfiguration) -> ModelConfiguration
@@ -147,7 +147,12 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         continue
                     }
 
-                    state = .streaming(stream, iterator)
+                    if case .toolCall = next {
+                        state = .finished
+                    } else {
+                        state = .streaming(stream, iterator)
+                    }
+
                     return next
                 } while true
 
@@ -168,18 +173,23 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         continue
                     }
 
-                    state = .streaming(stream, iterator)
+                    if case .toolCall = next {
+                        state = .finished
+                    } else {
+                        state = .streaming(stream, iterator)
+                    }
+
                     return next
                 } while true
             }
         }
     }
 
-    public var result: (reasoning: String?, text: String?, toolCalls: [ToolCall]?) {
+    public var result: (reasoning: String?, text: String?, toolCall: ToolCall?) {
         get async throws {
             var reasoning = ""
             var text = ""
-            var toolCall: [ToolCall] = []
+            var toolCall: ToolCall?
 
             for try await response in self {
                 switch response {
@@ -188,7 +198,11 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 case let .text(part):
                     text += part
                 case let .toolCall(part):
-                    toolCall.append(part)
+                    toolCall = part
+                    // NOTE: We should always stop inference after receiving
+                    //       a tool call. Inference should continue once
+                    //       the tool call's result is ready and provided to
+                    //       the LLM.
                 }
             }
 
@@ -199,7 +213,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             return (
                 reasoning: reasoning.isEmpty ? nil : reasoning,
                 text: text.isEmpty ? nil : text,
-                toolCalls: toolCall.isEmpty ? nil : toolCall
+                toolCall: toolCall
             )
         }
     }
@@ -497,7 +511,11 @@ extension LLM where Model == GPTOSSModel {
             input: input,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: nil,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<|call|>"]
+                return config
+            },
             responseParser: responseParser
         )
     }
