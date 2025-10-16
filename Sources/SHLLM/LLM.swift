@@ -175,11 +175,11 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         }
     }
 
-    public var result: (reasoning: String?, text: String?, toolCall: ToolCall?) {
+    public var result: (reasoning: String?, text: String?, toolCalls: [ToolCall]?) {
         get async throws {
             var reasoning = ""
             var text = ""
-            var toolCall: ToolCall?
+            var toolCalls = [ToolCall]()
 
             for try await response in self {
                 switch response {
@@ -188,8 +188,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 case let .text(part):
                     text += part
                 case let .toolCall(part):
-                    assert(toolCall == nil)
-                    toolCall = part
+                    toolCalls.append(part)
                 }
             }
 
@@ -200,7 +199,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             return (
                 reasoning: reasoning.isEmpty ? nil : reasoning,
                 text: text.isEmpty ? nil : text,
-                toolCall: toolCall
+                toolCalls: toolCalls.isEmpty ? nil : toolCalls
             )
         }
     }

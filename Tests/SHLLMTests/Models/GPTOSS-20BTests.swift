@@ -192,8 +192,8 @@ struct GPTOSS_20BTests {
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning, text, toolCallOpt) = try await llm1.result
-        let toolCall = try #require(toolCallOpt)
+        let (reasoning, text, toolCallsOpt) = try await llm1.result
+        let toolCall = try #require(toolCallsOpt?.first)
 
         #expect(reasoning != nil)
         #expect(text == nil)
@@ -212,6 +212,100 @@ struct GPTOSS_20BTests {
         #expect(!result.isEmpty)
         #expect(result.lowercased().contains("aapl"))
         #expect(result.contains("123.45"))
+    }
+
+    @Test
+    func canCompleteMultiToolWorkflowAndEmail() async throws {
+        let chat: [Chat.Message] = [
+            .system("""
+                You are a helpful assistant that must complete tasks by calling tools \
+                in sequence. When asked to find information on the web and email it, \
+                you must:
+
+                1) use web_search to find a relevant page
+                2) use fetch_web_page to retrieve the page content
+                3) use find_email_in_contacts to get the recipient's email
+                4) use send_email to send the email with the requested information.
+                """
+            ),
+            .user(
+                "Find the keynote date from the ACME Conference website and email it to Alex Example."
+            ),
+        ]
+
+        // web_search
+        var input = UserInput(chat: chat)
+        guard let llm = try gptOSS_20B(input, tools: [
+            webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
+        ]) else { return }
+
+        let (_, _, toolCallsOutput1) = try await llm.result
+        let toolCall1 = try #require(toolCallsOutput1?.first)
+        #expect(toolCall1.function.name == "web_search")
+
+        input.appendHarmonyAssistantToolCall(toolCall1)
+        input.appendHarmonyToolResult([
+            "results": [[
+                "title": "ACME Conference 2025 Keynote",
+                "url": "https://acme.test/conf",
+            ]],
+        ])
+
+        // fetch_web_page
+        guard let llm2 = try gptOSS_20B(input, tools: [
+            webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
+        ]) else { return }
+        let (_, _, toolCallsOutput2) = try await llm2.result
+        let toolCall2 = try #require(toolCallsOutput2?.first)
+        #expect(toolCall2.function.name == "fetch_web_page")
+
+        input.appendHarmonyAssistantToolCall(toolCall2)
+        input.appendHarmonyToolResult([
+            "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
+        ])
+
+        // find_email_in_contacts
+        guard let llm3 = try gptOSS_20B(input, tools: [
+            webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
+        ]) else { return }
+        let (_, _, toolCallsOutput3) = try await llm3.result
+        let toolCall3 = try #require(toolCallsOutput3?.first)
+        #expect(toolCall3.function.name == "find_email_in_contacts")
+
+        input.appendHarmonyAssistantToolCall(toolCall3)
+        input.appendHarmonyToolResult([
+            "email": "alex@example.com",
+        ])
+
+        // send_email
+        guard let llm4 = try gptOSS_20B(input, tools: [
+            webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
+        ]) else { return }
+        let (_, _, toolCallsOutput4) = try await llm4.result
+        let toolCall4 = try #require(toolCallsOutput4?.first)
+        #expect(toolCall4.function.name == "send_email")
+        let toArg = try #require(toolCall4.function.arguments["to"])
+        let subjectArg = try #require(toolCall4.function.arguments["subject"])
+        let bodyArg = try #require(toolCall4.function.arguments["body"])
+        #expect((toArg.anyValue as? String) == "alex@example.com")
+        #expect((subjectArg.anyValue as? String)?.isEmpty == false)
+        #expect((bodyArg.anyValue as? String)?.isEmpty == false)
+
+        input.appendHarmonyAssistantToolCall(toolCall4)
+        input.appendHarmonyToolResult([
+            "status": "sent",
+        ])
+
+        // assistant response
+        guard let llm5 = try gptOSS_20B(input, tools: [
+            webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
+        ]) else { return }
+
+        let response = try await llm5.text.result
+        Swift.print(response)
+        #expect(!response.isEmpty)
+        #expect(response.lowercased().contains("sent"))
+        #expect(response.lowercased().contains("alex"))
     }
 }
 

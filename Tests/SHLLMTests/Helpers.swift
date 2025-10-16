@@ -170,3 +170,86 @@ let newsTool = Tool<NewsArguments, NewsResponse>(
         "Microsoft releases new Surface Pro",
     ])
 }
+
+// MARK: - Multi-step workflow tools (search -> fetch -> find email -> send email)
+
+struct WebSearchInput: Codable, Hashable, Sendable {
+    let query: String
+}
+
+struct WebSearchOutput: Codable, Hashable, Sendable {
+    struct Result: Codable, Hashable, Sendable {
+        let title: String
+        let url: String
+    }
+
+    let results: [Result]
+}
+
+let webSearchTool = Tool<WebSearchInput, WebSearchOutput>(
+    name: "web_search",
+    description: "Search the web for relevant pages",
+    parameters: [
+        .required("query", type: .string, description: "Search query"),
+    ]
+) { _ in
+    WebSearchOutput(results: [])
+}
+
+struct FetchPageInput: Codable, Hashable, Sendable {
+    let url: String
+}
+
+struct FetchPageOutput: Codable, Hashable, Sendable {
+    let content: String
+}
+
+let fetchPageTool = Tool<FetchPageInput, FetchPageOutput>(
+    name: "fetch_web_page",
+    description: "Fetch a web page and return raw text content",
+    parameters: [
+        .required("url", type: .string, description: "URL to fetch"),
+    ]
+) { _ in
+    FetchPageOutput(content: "")
+}
+
+struct FindEmailInput: Codable, Hashable, Sendable {
+    let name: String
+}
+
+struct FindEmailOutput: Codable, Hashable, Sendable {
+    let email: String
+}
+
+let findEmailTool = Tool<FindEmailInput, FindEmailOutput>(
+    name: "find_email_in_contacts",
+    description: "Find a person's email address in the user's contacts list",
+    parameters: [
+        .required("name", type: .string, description: "Full name to search for"),
+    ]
+) { _ in
+    FindEmailOutput(email: "")
+}
+
+struct SendEmailInput: Codable, Hashable, Sendable {
+    let to: String
+    let subject: String
+    let body: String
+}
+
+struct SendEmailOutput: Codable, Hashable, Sendable {
+    let status: String
+}
+
+let sendEmailTool = Tool<SendEmailInput, SendEmailOutput>(
+    name: "send_email",
+    description: "Send an email to the specified recipient",
+    parameters: [
+        .required("to", type: .string, description: "Recipient email"),
+        .required("subject", type: .string, description: "Email subject"),
+        .required("body", type: .string, description: "Email body"),
+    ]
+) { _ in
+    SendEmailOutput(status: "sent")
+}
