@@ -24,6 +24,9 @@ bin/test.sh
 # Run tests for a specific model
 bin/test.sh SHLLMTests/FILE_NAME
 
+# Run a specific test when using Swift Testing
+bin/test.sh 'SHLLMTests/TestStructName/testFunctionName()'
+
 # Format the code
 bin/format.sh
 ```

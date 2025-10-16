@@ -5,7 +5,7 @@ import MLXLMCommon
 import Testing
 
 @Suite(.serialized)
-struct Qwen3_4BTests {
+struct GPTOSS_20BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct Qwen3_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_4B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         var reasoning = ""
         var result = ""
@@ -42,7 +42,7 @@ struct Qwen3_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_4B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -60,7 +60,7 @@ struct Qwen3_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_4B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         let (_reasoning, _text, toolCalls) = try await llm.result
 
@@ -82,7 +82,7 @@ struct Qwen3_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_4B(input) else { return }
+        guard let llm = try gptOSS_20B(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -98,7 +98,7 @@ struct Qwen3_4BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try qwen3_4B(
+        guard let llm = try gptOSS_20B(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -126,8 +126,54 @@ struct Qwen3_4BTests {
 
         #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        #expect(toolCallCount == 1)
+        #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
+    }
+
+    @Test
+    func canChooseBetweenDifferentTools() async throws {
+        let input = UserInput(chat: [
+            .system(
+                "You are a helpful assistant that can provide weather, stock prices, and news."
+            ),
+            .user("Get the latest news about Apple, sorted by popularity."),
+        ])
+
+        guard let llm = try gptOSS_20B(
+            input,
+            tools: [weatherTool, stockTool, newsTool]
+        ) else { return }
+
+        var reasoning = ""
+        var reply = ""
+        var toolCallCount = 0
+        var newsQueryFound = false
+        var newsSortByFound = false
+
+        for try await response in llm {
+            switch response {
+            case let .reasoning(text):
+                reasoning.append(text)
+            case let .text(text):
+                reply.append(text)
+            case let .toolCall(toolCall):
+                toolCallCount += 1
+                #expect(toolCall.function.name == "get_latest_news")
+
+                if case let .string(query) = toolCall.function.arguments["query"] {
+                    newsQueryFound = query.lowercased().contains("apple")
+                }
+                if case let .string(sortBy) = toolCall.function.arguments["sortBy"] {
+                    newsSortByFound = sortBy.lowercased().contains("popularity")
+                }
+            }
+        }
+
+        #expect(!reasoning.isEmpty)
+        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        #expect(toolCallCount >= 1)
+        #expect(newsQueryFound)
+        #expect(newsSortByFound)
     }
 
     @Test
@@ -141,7 +187,7 @@ struct Qwen3_4BTests {
 
         var input = UserInput(chat: chat)
 
-        guard let llm1 = try qwen3_4B(
+        guard let llm1 = try gptOSS_20B(
             input,
             tools: [stockTool]
         ) else { return }
@@ -154,9 +200,9 @@ struct Qwen3_4BTests {
         #expect(toolCall.function.name == "get_stock_price")
         #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
-        input.appendToolResult(["price": 123.45])
-
-        guard let llm2 = try qwen3_4B(
+        input.appendHarmonyAssistantToolCall(toolCall)
+        input.appendHarmonyToolResult(["price": 123.45])
+        guard let llm2 = try gptOSS_20B(
             input,
             tools: [stockTool]
         ) else { return }
@@ -189,7 +235,7 @@ struct Qwen3_4BTests {
 
         // web_search
         var input = UserInput(chat: chat)
-        guard let llm = try qwen3_4B(input, tools: [
+        guard let llm = try gptOSS_20B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -197,7 +243,8 @@ struct Qwen3_4BTests {
         let toolCall1 = try #require(toolCallsOutput1?.first)
         #expect(toolCall1.function.name == "web_search")
 
-        input.appendToolResult([
+        input.appendHarmonyAssistantToolCall(toolCall1)
+        input.appendHarmonyToolResult([
             "results": [[
                 "title": "ACME Conference 2025 Keynote",
                 "url": "https://acme.test/conf",
@@ -205,45 +252,37 @@ struct Qwen3_4BTests {
         ])
 
         // fetch_web_page
-        guard let llm2 = try qwen3_4B(input, tools: [
+        guard let llm2 = try gptOSS_20B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
         let toolCall2 = try #require(toolCallsOutput2?.first)
         #expect(toolCall2.function.name == "fetch_web_page")
 
-        input.appendToolResult([
+        input.appendHarmonyAssistantToolCall(toolCall2)
+        input.appendHarmonyToolResult([
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
 
         // find_email_in_contacts
-        guard let llm3 = try qwen3_4B(input, tools: [
+        guard let llm3 = try gptOSS_20B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
-        #expect(toolCallsOutput3?.count == 1)
         let toolCall3 = try #require(toolCallsOutput3?.first)
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
-        input.appendToolResult([
+        input.appendHarmonyAssistantToolCall(toolCall3)
+        input.appendHarmonyToolResult([
             "email": "alex@example.com",
         ])
 
         // send_email
-        guard let llm4 = try qwen3_4B(input, tools: [
+        guard let llm4 = try gptOSS_20B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
-        let (reasoning, text, toolCalls4) = try await llm4.result
-
-        guard let toolCall4 = toolCalls4?.first else {
-            Issue.record("""
-                Did not call send_email: reasoning=\(String(describing: reasoning)), \
-                text=\(String(describing: text))
-                """
-            )
-            return
-        }
-
+        let (_, _, toolCallsOutput4) = try await llm4.result
+        let toolCall4 = try #require(toolCallsOutput4?.first)
         #expect(toolCall4.function.name == "send_email")
         let toArg = try #require(toolCall4.function.arguments["to"])
         let subjectArg = try #require(toolCall4.function.arguments["subject"])
@@ -252,10 +291,13 @@ struct Qwen3_4BTests {
         #expect((subjectArg.anyValue as? String)?.isEmpty == false)
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
-        input.appendToolResult(["status": "sent"])
+        input.appendHarmonyAssistantToolCall(toolCall4)
+        input.appendHarmonyToolResult([
+            "status": "sent",
+        ])
 
         // assistant response
-        guard let llm5 = try qwen3_4B(input, tools: [
+        guard let llm5 = try gptOSS_20B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -267,14 +309,19 @@ struct Qwen3_4BTests {
     }
 }
 
-private func qwen3_4B(
+private func gptOSS_20B(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
-) throws -> LLM<Qwen3Model>? {
+) throws -> LLM<GPTOSSModel>? {
     try loadModel(
-        directory: LLM<Qwen3Model>.qwen3_4B,
+        directory: LLM<GPTOSSModel>.gptOSS_20B_8bit,
         input: input,
         tools: tools,
-        responseParser: LLM<Qwen3Model>.qwen3Parser
+        customConfiguration: { config in
+            var config = config
+            config.extraEOSTokens = ["<|call|>"]
+            return config
+        },
+        responseParser: LLM<GPTOSSModel>.gptOSSParser
     )
 }

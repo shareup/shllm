@@ -85,6 +85,8 @@ struct ToolTests {
             case let .toolCall(toolCall):
                 toolCallCount += 1
                 #expect(toolCall.function.name == "get_current_weather")
+            case .reasoning:
+                break
             }
         }
 

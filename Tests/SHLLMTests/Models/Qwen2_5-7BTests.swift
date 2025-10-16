@@ -67,6 +67,8 @@ struct Qwen2_5__7BTests {
                 if case let .string(location) = toolCall.function.arguments["location"] {
                     weatherLocationFound = location.lowercased().contains("paris")
                 }
+            case .reasoning:
+                break
             }
         }
 

@@ -34,6 +34,7 @@ ids=(
   "Meta-Llama-3-8B-Instruct-4bit"
   "Llama-3.2-1B-Instruct-4bit"
   "Llama-3.2-3B-Instruct-4bit"
+  "lmstudio-community/gpt-oss-20b-MLX-8bit"
 )
 
 id="${1}"
@@ -53,7 +54,15 @@ fi
 project=$(dirname "$0")
 pushd "$project/.." &>/dev/null
 
-metaurl="https://huggingface.co/api/models/mlx-community/${id}"
+if [[ "${id}" == *"/"* ]]; then
+  repo_path="${id}"
+else
+  repo_path="mlx-community/${id}"
+fi
+
+model_name=$(basename "${id}")
+
+metaurl="https://huggingface.co/api/models/${repo_path}"
 echo "${metaurl}"
 
 files=$(curl -s "${metaurl}" | jq -r '.siblings[].rfilename')
@@ -61,12 +70,12 @@ echo "${files}"
 
 pushd Sources/SHLLM/Resources &>/dev/null
 
-mkdir -p "${id}"
+mkdir -p "${model_name}"
 
-pushd "${id}" &>/dev/null
+pushd "${model_name}" &>/dev/null
 
 for file in ${files[@]}; do
-  curl -L -# -o "${file}" "https://huggingface.co/mlx-community/${id}/resolve/main/${file}"
+  curl -L -# -o "${file}" "https://huggingface.co/${repo_path}/resolve/main/${file}"
 done
 
 popd

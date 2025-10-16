@@ -9,12 +9,13 @@ import MLXNN
 import MLXVLM
 import Tokenizers
 
-public struct LLM<Model: LanguageModel>: AsyncSequence {
-    public enum Response {
-        case text(String)
-        case toolCall(ToolCall)
-    }
+public enum Response {
+    case reasoning(String)
+    case text(String)
+    case toolCall(ToolCall)
+}
 
+public struct LLM<Model: LanguageModel>: AsyncSequence {
     public typealias Element = Response
     public typealias CustomConfiguration =
         (ModelConfiguration) -> ModelConfiguration
@@ -25,6 +26,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
     private let customConfiguration: CustomConfiguration?
+    private let responseParser: ResponseParser
 
     public init(
         directory: URL,
@@ -33,7 +35,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
-        customConfiguration: CustomConfiguration? = nil
+        customConfiguration: CustomConfiguration? = nil,
+        responseParser: ResponseParser = Self.defaultParser
     ) {
         self.directory = directory
         let input = {
@@ -51,6 +54,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
         self.customConfiguration = customConfiguration
+        self.responseParser = responseParser
     }
 
     public func makeAsyncIterator() -> AsyncIterator {
@@ -60,7 +64,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: customConfiguration
+            customConfiguration: customConfiguration,
+            responseParser: responseParser
         )
     }
 
@@ -71,6 +76,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
         private let customConfiguration: CustomConfiguration?
+        private let responseParser: ResponseParser
 
         private var state: State
 
@@ -91,13 +97,15 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
-            customConfiguration: CustomConfiguration? = nil
+            customConfiguration: CustomConfiguration? = nil,
+            responseParser: ResponseParser
         ) {
             self.directory = directory
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
             self.customConfiguration = customConfiguration
+            self.responseParser = responseParser
             self.tools = tools
             state = .initial
         }
@@ -135,19 +143,12 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         return nil
                     }
 
-                    switch next {
-                    case let .chunk(chunk):
-                        state = .streaming(stream, iterator)
-                        return .text(chunk)
-
-                    case .info:
-                        state = .finished
-                        return nil
-
-                    case let .toolCall(toolCall):
-                        state = .streaming(stream, iterator)
-                        return .toolCall(toolCall)
+                    guard let next = responseParser.parse(next) else {
+                        continue
                     }
+
+                    state = .streaming(stream, iterator)
+                    return next
                 } while true
 
             case let .failed(error):
@@ -163,21 +164,43 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                         return nil
                     }
 
-                    switch next {
-                    case let .chunk(chunk):
-                        state = .streaming(stream, iterator)
-                        return .text(chunk)
-
-                    case .info:
-                        state = .finished
-                        return nil
-
-                    case let .toolCall(toolCall):
-                        state = .streaming(stream, iterator)
-                        return .toolCall(toolCall)
+                    guard let next = responseParser.parse(next) else {
+                        continue
                     }
+
+                    state = .streaming(stream, iterator)
+                    return next
                 } while true
             }
+        }
+    }
+
+    public var result: (reasoning: String?, text: String?, toolCalls: [ToolCall]?) {
+        get async throws {
+            var reasoning = ""
+            var text = ""
+            var toolCalls = [ToolCall]()
+
+            for try await response in self {
+                switch response {
+                case let .reasoning(part):
+                    reasoning += part
+                case let .text(part):
+                    text += part
+                case let .toolCall(part):
+                    toolCalls.append(part)
+                }
+            }
+
+            let whitespace = CharacterSet.whitespacesAndNewlines
+            reasoning = reasoning.trimmingCharacters(in: whitespace)
+            text = text.trimmingCharacters(in: whitespace)
+
+            return (
+                reasoning: reasoning.isEmpty ? nil : reasoning,
+                text: text.isEmpty ? nil : text,
+                toolCalls: toolCalls.isEmpty ? nil : toolCalls
+            )
         }
     }
 }
@@ -221,6 +244,8 @@ public extension LLM {
             public mutating func next() async throws -> String? {
                 while let response = try await iterator.next() {
                     switch response {
+                    case .reasoning:
+                        continue
                     case let .text(text):
                         return text
                     case .toolCall:
@@ -293,14 +318,16 @@ extension LLM where Model == Qwen2Model {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser = Self.deepSeekR1Parser
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            responseParser: responseParser
         )
     }
 
@@ -449,6 +476,39 @@ extension LLM where Model == Gemma3 {
     static var gemma3_27B: URL {
         get throws {
             let dir = "gemma-3-27b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - GPT-OSS
+
+extension LLM where Model == GPTOSSModel {
+    public static func gptOSS(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser = Self.gptOSSParser
+    ) throws -> LLM<GPTOSSModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<|call|>"]
+                return config
+            },
+            responseParser: responseParser
+        )
+    }
+
+    static var gptOSS_20B_8bit: URL {
+        get throws {
+            let dir = "gpt-oss-20b-MLX-8bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
@@ -722,14 +782,16 @@ extension LLM where Model == Qwen3Model {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser = Self.qwen3Parser
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            responseParser: responseParser
         )
     }
 
@@ -769,14 +831,16 @@ extension LLM where Model == Qwen3MoEModel {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser = Self.qwen3MoEParser
     ) throws -> LLM<Qwen3MoEModel> {
         try SHLLM.assertSupportedDevice
         return .init(
             directory: directory,
             input: input,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            responseParser: responseParser
         )
     }
 

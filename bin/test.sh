@@ -1,37 +1,44 @@
 #!/usr/bin/env bash
-# https://sharats.me/posts/shell-script-best-practices/
 
-set -o errexit
-set -o nounset
-set -o pipefail
-if [[ "${TRACE-0}" == "1" ]]; then
-  set -o xtrace
-fi
-
-if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
-  echo 'Usage: ./test.sh [MODULE/FILE]'
-  exit
-fi
-
-DIR=$(dirname "$0")
-pushd "$DIR/.." &>/dev/null
+set -eo pipefail
+cd "$(dirname $0)/.."
 
 testSpecifiers=()
 for arg in "$@"; do
   testSpecifiers+=("-only-testing:$arg")
 done
 
-tests=$(echo "${testSpecifiers[@]:-}" | sed 's/ *$//')
+xcodeVersion=$(xcodebuild -version | sed -n 's/Xcode \([0-9]*\).*/\1/p')
+if [ "$xcodeVersion" -ge 26 ]; then
+  if ! xcodebuild -showComponent metalToolchain >/dev/null 2>&1; then
+    echo "❌ Metal toolchain is not installed"
 
-beautify=""
-if command -v xcbeautify &>/dev/null; then
-  beautify="| xcbeautify"
+    echo "⬇️ Downloading Metal toolchain..."
+    eval "exec xcodebuild \
+      -downloadComponent metalToolchain
+      -exportPath /tmp/metalToolchainDownload/ ${beautify}"
+
+    echo "🧰 Installing Metal toolchain..."
+    eval "exec xcodebuild
+      -importComponent metalToolchain
+      -importPath /tmp/metalToolchainDownload/*.exportedBundle ${beautify}"
+  fi
 fi
 
-eval "exec xcodebuild \
-  -scheme SHLLM \
-  -destination 'platform=OS X' \
-  ${tests} \
-  test ${beautify}"
+signingFlags="CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO"
 
-popd &>/dev/null
+if command -v xcbeautify &>/dev/null; then
+  xcodebuild \
+    -scheme SHLLM \
+    -destination 'platform=OS X' \
+    ${signingFlags} \
+    "${testSpecifiers[@]}" \
+    test | xcbeautify
+else
+  xcodebuild \
+    -scheme SHLLM \
+    -destination 'platform=OS X' \
+    ${signingFlags} \
+    "${testSpecifiers[@]}" \
+    test
+fi

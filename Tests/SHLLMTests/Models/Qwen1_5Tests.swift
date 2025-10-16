@@ -1,4 +1,5 @@
 import Foundation
+import MLXLLM
 @testable import SHLLM
 import Testing
 

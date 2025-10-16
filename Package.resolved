@@ -10,15 +10,6 @@
       }
     },
     {
-      "identity" : "jinja",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/johnmai-dev/Jinja",
-      "state" : {
-        "revision" : "bb238dd96fbe4c18014f3107c00edd6edb15428e",
-        "version" : "1.2.4"
-      }
-    },
-    {
       "identity" : "mlx-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ml-explore/mlx-swift",
@@ -32,17 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/shareup/mlx-swift-examples",
       "state" : {
-        "revision" : "b6c80afad9c79b22007f578123fc5d2a24125f62",
-        "version" : "0.0.12"
-      }
-    },
-    {
-      "identity" : "swift-argument-parser",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser.git",
-      "state" : {
-        "revision" : "0fbc8848e389af3bb55c182bc19ca9d5dc2f255b",
-        "version" : "1.4.0"
+        "revision" : "d9cbc90309f55fd36bcf00c67c3789a34aa5e4ac",
+        "version" : "0.0.14"
       }
     },
     {
@@ -64,12 +46,21 @@
       }
     },
     {
+      "identity" : "swift-jinja",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/huggingface/swift-jinja.git",
+      "state" : {
+        "revision" : "c1ef5963ba4a97a589b9c9583ff4ee3352a86d23",
+        "version" : "2.1.0"
+      }
+    },
+    {
       "identity" : "swift-numerics",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-numerics",
       "state" : {
-        "revision" : "bbadd4b853a33fd78c4ae977d17bb2af15eb3f2a",
-        "version" : "1.1.0"
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
       }
     },
     {
@@ -77,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-transformers",
       "state" : {
-        "revision" : "ed54f3c9589d6cdc6fc2bb810e4809b0735fee01",
-        "version" : "0.1.23"
+        "revision" : "a2e184dddb4757bc943e77fbe99ac6786c53f0b2",
+        "version" : "1.0.0"
       }
     },
     {

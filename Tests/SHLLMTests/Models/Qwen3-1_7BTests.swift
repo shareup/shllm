@@ -15,6 +15,35 @@ struct Qwen3__1_7BTests {
 
         guard let llm = try qwen3__1_7B(input) else { return }
 
+        var reasoning = ""
+        var result = ""
+        for try await reply in llm {
+            switch reply {
+            case let .reasoning(text):
+                reasoning.append(text)
+            case let .text(text):
+                result.append(text)
+            case .toolCall:
+                Issue.record()
+            }
+        }
+
+        Swift.print("<think>\n\(reasoning)\n</think>")
+        #expect(!reasoning.isEmpty)
+
+        Swift.print(result)
+        #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canStreamTextResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try qwen3__1_7B(input) else { return }
+
         var result = ""
         for try await reply in llm.text {
             result.append(reply)
@@ -26,6 +55,28 @@ struct Qwen3__1_7BTests {
 
     @Test
     func canAwaitResult() async throws {
+        let input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+
+        guard let llm = try qwen3__1_7B(input) else { return }
+
+        let (_reasoning, _text, toolCalls) = try await llm.result
+
+        let reasoning = try #require(_reasoning)
+        Swift.print("<think>\n\(reasoning)\n</think>")
+        #expect(!reasoning.isEmpty)
+
+        let text = try #require(_text)
+        Swift.print(text)
+        #expect(!text.isEmpty)
+
+        #expect(toolCalls == nil)
+    }
+
+    @Test
+    func canAwaitTextResult() async throws {
         let input: UserInput = .init(messages: [
             ["role": "system", "content": "You are a helpful assistant."],
             ["role": "user", "content": "What is the meaning of life?"],
@@ -52,12 +103,15 @@ struct Qwen3__1_7BTests {
             tools: [weatherTool]
         ) else { return }
 
+        var reasoning = ""
         var reply = ""
         var toolCallCount = 0
         var weatherLocationFound = false
 
         for try await response in llm {
             switch response {
+            case let .reasoning(text):
+                reasoning.append(text)
             case let .text(text):
                 reply.append(text)
             case let .toolCall(toolCall):
@@ -70,7 +124,8 @@ struct Qwen3__1_7BTests {
             }
         }
 
-        #expect(!reply.isEmpty)
+        #expect(!reasoning.isEmpty)
+        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount == 1)
         #expect(weatherLocationFound)
     }
@@ -83,6 +138,7 @@ private func qwen3__1_7B(
     try loadModel(
         directory: LLM<Qwen3Model>.qwen3__1_7B,
         input: input,
-        tools: tools
+        tools: tools,
+        responseParser: LLM<Qwen3Model>.qwen3Parser
     )
 }
