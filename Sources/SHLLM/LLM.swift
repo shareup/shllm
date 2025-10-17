@@ -318,8 +318,7 @@ extension LLM where Model == Qwen2Model {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil,
-        responseParser: ResponseParser = Self.deepSeekR1Parser
+        maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
         try SHLLM.assertSupportedDevice
         return .init(
@@ -327,7 +326,7 @@ extension LLM where Model == Qwen2Model {
             input: input,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            responseParser: responseParser
+            responseParser: deepSeekR1Parser
         )
     }
 
@@ -488,8 +487,7 @@ extension LLM where Model == GPTOSSModel {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil,
-        responseParser: ResponseParser = Self.gptOSSParser
+        maxOutputTokenCount: Int? = nil
     ) throws -> LLM<GPTOSSModel> {
         try SHLLM.assertSupportedDevice
         return .init(
@@ -502,7 +500,7 @@ extension LLM where Model == GPTOSSModel {
                 config.extraEOSTokens = ["<|call|>"]
                 return config
             },
-            responseParser: responseParser
+            responseParser: gptOSSParser
         )
     }
 
@@ -808,8 +806,7 @@ extension LLM where Model == Qwen3Model {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil,
-        responseParser: ResponseParser = Self.qwen3Parser
+        maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
         try SHLLM.assertSupportedDevice
         return .init(
@@ -817,7 +814,7 @@ extension LLM where Model == Qwen3Model {
             input: input,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            responseParser: responseParser
+            responseParser: qwen3Parser
         )
     }
 
@@ -857,8 +854,7 @@ extension LLM where Model == Qwen3MoEModel {
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil,
-        responseParser: ResponseParser = Self.qwen3MoEParser
+        maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3MoEModel> {
         try SHLLM.assertSupportedDevice
         return .init(
@@ -866,7 +862,7 @@ extension LLM where Model == Qwen3MoEModel {
             input: input,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            responseParser: responseParser
+            responseParser: qwen3MoEParser
         )
     }
 
