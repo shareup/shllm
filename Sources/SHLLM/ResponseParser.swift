@@ -144,6 +144,11 @@ public extension LLM where Model == GPTOSSModel {
                         return nil
                     }
 
+                    // NOTE: This shouldn't be possible to reach yet because, as mentioned
+                    //       above, MLX Swift will not send us the `<|call|>` token because
+                    //       we've added it to `extraEOSTokens`. But, once MLX Swift
+                    //       supports Harmony natively, we will be able to reach this code.
+                    state.didSendToolCall = true
                     if let toolCall = state.toolCall() {
                         try? state.parser.processEOS()
                         return .toolCall(toolCall)
