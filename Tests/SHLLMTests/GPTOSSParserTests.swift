@@ -22,18 +22,18 @@ struct GPTOSSParserTests {
         ]
 
         var text = ""
-        var sawReasoning = false
-        var sawToolCall = false
+        var hasReasoning = false
+        var hasToolCall = false
 
-        for tok in tokens {
-            if let response = parser.parse(.chunk(tok)) {
+        for token in tokens {
+            if let response = parser.parse(.chunk(token)) {
                 switch response {
                 case let .text(delta):
                     text += delta
                 case .reasoning:
-                    sawReasoning = true
+                    hasReasoning = true
                 case .toolCall:
-                    sawToolCall = true
+                    hasToolCall = true
                 }
             }
         }
@@ -43,7 +43,7 @@ struct GPTOSSParserTests {
 
         #expect(!text.isEmpty)
         #expect(text.contains("Action plan:"))
-        #expect(!sawReasoning)
-        #expect(!sawToolCall)
+        #expect(!hasReasoning)
+        #expect(!hasToolCall)
     }
 }
