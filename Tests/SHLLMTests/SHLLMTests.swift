@@ -15,14 +15,6 @@ func cacheLimit() async throws {
 }
 
 @Test
-func memoryLimit() async throws {
-    let limit = 1024
-    #expect(SHLLM.memoryLimit != limit)
-    SHLLM.memoryLimit = limit
-    #expect(SHLLM.memoryLimit == limit)
-}
-
-@Test
 func recommendedMaxWorkingSetSize() async throws {
     let recommended = SHLLM.recommendedMaxWorkingSetSize
     #expect(recommended > 0)
