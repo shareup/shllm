@@ -29,15 +29,6 @@ public enum SHLLM {
         }
     }
 
-    public static var memoryLimit: Int {
-        get {
-            MLX.GPU.memoryLimit
-        }
-        set {
-            MLX.GPU.set(memoryLimit: newValue)
-        }
-    }
-
     public static var recommendedMaxWorkingSetSize: Int {
         guard let device = MTLCreateSystemDefaultDevice(),
               device.recommendedMaxWorkingSetSize < Int.max

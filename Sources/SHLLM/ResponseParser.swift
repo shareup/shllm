@@ -1,5 +1,6 @@
 import Foundation
 import class MLXLLM.GPTOSSModel
+import class MLXLLM.LFM2MoEModel
 import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
@@ -71,35 +72,32 @@ public extension LLM where Model == Qwen3MoEModel {
 
 public extension LLM where Model == GPTOSSModel {
     static var gptOSSParser: ResponseParser {
-        let state = Locked(State())
+        let state = Locked(GPTOSSState())
         return ResponseParser { (generation: Generation) -> Response? in
             state.access { state -> Response? in
-                // NOTE: Because MLX Swift does not natively support
-                //       Harmony, the tool calls produced by GPT-OSS
-                //       are not sent as `Generation.toolCall` and
-                //       the `<|call|>` token is not recognized as
-                //       a stop token. In order to make tool call
-                //       work in SHLLM, we manually parse the
-                //       Harmony message format and extract the tool
-                //       call from the message. However, since it's
-                //       incorrect to continue inference after the
-                //       model produces `<|call|>`, we added that
-                //       token to `extraEOSTokens`, which means that
-                //       MLX Swift will stop generating tokens when it
-                //       encounters `<|call|>`. So, our Harmony parser
-                //       will never actually see the tool call token, which
-                //       means we won't know when to send a tool call.
-                //       To work around this, we check for the presence of
-                //       a tool call after MLX Swift stops generating tokens.
-                //       If one exists, we send it to the client. But, to
-                //       prevent a loop where we send the same tool call
-                //       over and over again, we need to break if we've
-                //       already sent the tool call.
+                // NOTE: Because MLX Swift does not natively support Harmony,
+                //       the tool calls produced by GPT-OSS are not sent as
+                //       `Generation.toolCall` and the `<|call|>` token is not
+                //       recognized as a stop token. In order to make tool call
+                //       work in SHLLM, we manually parse the Harmony message
+                //       format and extract the tool call from the message.
+                //       However, since it's incorrect to continue inference
+                //       after the model produces `<|call|>`, we added that
+                //       token to `extraEOSTokens`, which means that MLX Swift
+                //       will stop generating tokens when it encounters `<|call|>`.
+                //       So, our Harmony parser will never actually see the tool
+                //       call token, which means we won't know when to send a
+                //       tool call. To work around this, we check for the
+                //       presence of a tool call after MLX Swift stops generating
+                //       tokens. If one exists, we send it to the client. But, to
+                //       prevent a loop where we send the same tool call over and
+                //       over again, we need to break if we've already sent the
+                //       tool call.
                 //
-                //       The fix for this will be to add Harmony support
-                //       directly to MLX Swift. At the very least, we'll
-                //       need to add a new `ToolCallProcessor`, but we may
-                //       also need to add a new stream detokenizer.
+                //       The fix for this will be to add Harmony support directly
+                //       to MLX Swift. At the very least, we'll need to add a new
+                //       `ToolCallProcessor`, but we may also need to add a new
+                //       stream detokenizer.
                 guard !state.didSendToolCall else {
                     return nil
                 }
@@ -144,6 +142,11 @@ public extension LLM where Model == GPTOSSModel {
                         return nil
                     }
 
+                    // NOTE: This shouldn't be possible to reach yet because, as mentioned
+                    //       above, MLX Swift will not send us the `<|call|>` token because
+                    //       we've added it to `extraEOSTokens`. But, once MLX Swift
+                    //       supports Harmony natively, we will be able to reach this code.
+                    state.didSendToolCall = true
                     if let toolCall = state.toolCall() {
                         try? state.parser.processEOS()
                         return .toolCall(toolCall)
@@ -162,7 +165,7 @@ public extension LLM where Model == GPTOSSModel {
         }
     }
 
-    private struct State {
+    private struct GPTOSSState {
         var parser = Harmony.StreamableParser(startingRole: .assistant)
         var didSendToolCall = false
 

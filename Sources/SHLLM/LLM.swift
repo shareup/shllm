@@ -481,10 +481,10 @@ extension LLM where Model == Gemma3 {
     }
 }
 
-// MARK: - GPT-OSS
+// MARK: - gpt-oss
 
 extension LLM where Model == GPTOSSModel {
-    public static func gptOSS(
+    public static func gptOSS_20B(
         directory: URL,
         input: UserInput,
         maxInputTokenCount: Int? = nil,
@@ -509,6 +509,32 @@ extension LLM where Model == GPTOSSModel {
     static var gptOSS_20B_8bit: URL {
         get throws {
             let dir = "gpt-oss-20b-MLX-8bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - LFM2
+
+extension LLM where Model == LFM2MoEModel {
+    public static func lfm2(
+        directory: URL,
+        input: UserInput,
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<LFM2MoEModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var lfm2_8B_A1B: URL {
+        get throws {
+            let dir = "LFM2-8B-A1B-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
