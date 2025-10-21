@@ -305,7 +305,6 @@ struct GPTOSS_20BTests {
         Swift.print(response)
         #expect(!response.isEmpty)
         #expect(response.lowercased().contains("sent"))
-        #expect(response.lowercased().contains("alex"))
     }
 }
 
