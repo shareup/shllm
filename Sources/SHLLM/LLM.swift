@@ -44,9 +44,13 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             if let processing {
                 input.processing = processing
             }
-            input.tools = tools.isEmpty
-                ? nil
-                : tools.map(\.schema)
+
+            if input.tools == nil || input.tools?.isEmpty == true,
+               !tools.isEmpty
+            {
+                input.tools = tools.map(\.schema)
+            }
+
             return input
         }()
         self.input = input
@@ -265,6 +269,7 @@ public extension LLM where Model: VLMModel {
         userMessage: String,
         image: URL,
         processing: UserInput.Processing? = nil,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil
@@ -277,6 +282,7 @@ public extension LLM where Model: VLMModel {
             directory: directory,
             input: input,
             processing: processing,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: customConfiguration
@@ -289,6 +295,7 @@ public extension LLM where Model: VLMModel {
         userMessage: String,
         image: Data,
         processing: UserInput.Processing? = nil,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil
@@ -304,6 +311,7 @@ public extension LLM where Model: VLMModel {
             directory: directory,
             input: input,
             processing: processing,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: customConfiguration
@@ -317,6 +325,7 @@ extension LLM where Model == Qwen2Model {
     public static func deepSeekR1(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
@@ -324,6 +333,7 @@ extension LLM where Model == Qwen2Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             responseParser: deepSeekR1Parser
@@ -344,6 +354,7 @@ extension LLM where Model == GemmaModel {
     public static func gemma(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<GemmaModel> {
@@ -351,6 +362,7 @@ extension LLM where Model == GemmaModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -370,6 +382,7 @@ extension LLM where Model == Gemma2Model {
     public static func gemma2(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma2Model> {
@@ -377,6 +390,7 @@ extension LLM where Model == Gemma2Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -403,6 +417,7 @@ extension LLM where Model == Gemma3TextModel {
     public static func gemma3_1B(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3TextModel> {
@@ -410,6 +425,7 @@ extension LLM where Model == Gemma3TextModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -434,6 +450,7 @@ extension LLM where Model == Gemma3 {
     public static func gemma3(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma3> {
@@ -441,6 +458,7 @@ extension LLM where Model == Gemma3 {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -486,6 +504,7 @@ extension LLM where Model == GPTOSSModel {
     public static func gptOSS_20B(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<GPTOSSModel> {
@@ -493,6 +512,7 @@ extension LLM where Model == GPTOSSModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             customConfiguration: { config in
@@ -518,6 +538,7 @@ extension LLM where Model == LFM2MoEModel {
     public static func lfm2(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LFM2MoEModel> {
@@ -525,14 +546,9 @@ extension LLM where Model == LFM2MoEModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: { config in
-                var config = config
-                // Stop generation as soon as the model closes a tool-call block.
-                config.extraEOSTokens = ["<|tool_call_end|>"]
-                return config
-            },
             responseParser: lfm2Parser
         )
     }
@@ -551,6 +567,7 @@ extension LLM where Model == LlamaModel {
     public static func codeLlama(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
@@ -558,6 +575,7 @@ extension LLM where Model == LlamaModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -573,6 +591,7 @@ extension LLM where Model == LlamaModel {
     public static func llama3(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
@@ -580,6 +599,7 @@ extension LLM where Model == LlamaModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -620,6 +640,7 @@ extension LLM where Model == LlamaModel {
     public static func mistral(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
@@ -627,6 +648,7 @@ extension LLM where Model == LlamaModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -653,6 +675,7 @@ extension LLM where Model == OpenELMModel {
     public static func openELM(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<OpenELMModel> {
@@ -660,6 +683,7 @@ extension LLM where Model == OpenELMModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -679,6 +703,7 @@ extension LLM where Model == PhiModel {
     public static func phi2(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<PhiModel> {
@@ -686,6 +711,7 @@ extension LLM where Model == PhiModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -705,6 +731,7 @@ extension LLM where Model == Phi3Model {
     public static func phi3(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Phi3Model> {
@@ -712,6 +739,7 @@ extension LLM where Model == Phi3Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -731,6 +759,7 @@ extension LLM where Model == PhiMoEModel {
     public static func phiMoE(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<PhiMoEModel> {
@@ -738,6 +767,7 @@ extension LLM where Model == PhiMoEModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -757,6 +787,7 @@ extension LLM where Model == Qwen2Model {
     public static func qwen1_5(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
@@ -764,6 +795,7 @@ extension LLM where Model == Qwen2Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -779,6 +811,7 @@ extension LLM where Model == Qwen2Model {
     public static func qwen2_5(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen2Model> {
@@ -786,6 +819,7 @@ extension LLM where Model == Qwen2Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
@@ -812,6 +846,7 @@ extension LLM where Model == Qwen3Model {
     public static func qwen3(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3Model> {
@@ -819,6 +854,7 @@ extension LLM where Model == Qwen3Model {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             responseParser: qwen3Parser
@@ -860,6 +896,7 @@ extension LLM where Model == Qwen3MoEModel {
     public static func qwen3MoE(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Qwen3MoEModel> {
@@ -867,6 +904,7 @@ extension LLM where Model == Qwen3MoEModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             responseParser: qwen3MoEParser
@@ -887,6 +925,7 @@ extension LLM where Model == LlamaModel {
     public static func smolLM(
         directory: URL,
         input: UserInput,
+        tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<LlamaModel> {
@@ -894,6 +933,7 @@ extension LLM where Model == LlamaModel {
         return .init(
             directory: directory,
             input: input,
+            tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount
         )
