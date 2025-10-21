@@ -526,7 +526,14 @@ extension LLM where Model == LFM2MoEModel {
             directory: directory,
             input: input,
             maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                // Stop generation as soon as the model closes a tool-call block.
+                config.extraEOSTokens = ["<|tool_call_end|>"]
+                return config
+            },
+            responseParser: lfm2Parser
         )
     }
 

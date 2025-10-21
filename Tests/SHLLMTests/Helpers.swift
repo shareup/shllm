@@ -188,7 +188,10 @@ struct WebSearchOutput: Codable, Hashable, Sendable {
 
 let webSearchTool = Tool<WebSearchInput, WebSearchOutput>(
     name: "web_search",
-    description: "Search the web for relevant pages",
+    description: """
+    Search the web for relevant pages. 
+    Only returns the links to the pages, not the page content itself.
+    """,
     parameters: [
         .required("query", type: .string, description: "Search query"),
     ]
