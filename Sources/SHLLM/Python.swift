@@ -1,14 +1,14 @@
 import Foundation
 import MLXLMCommon
 
-enum Python {
+public enum Python {
     /// Consumes and returns the first complete Python-style function call at the
     /// start of `buffer`, mutating `buffer` to remove the consumed text
     /// (including surrounding list brackets, optional commas, and whitespace).
     ///
     /// If no complete call is available yet, returns `nil` and leaves `buffer`
     /// (aside from trimming leading brackets/commas/whitespace) as-is.
-    static func parseFunctionCall(_ buffer: inout String) -> ToolCall? {
+    public static func parseFunctionCall(_ buffer: inout String) -> ToolCall? {
         let copy = buffer
 
         var i = copy.startIndex
