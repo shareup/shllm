@@ -86,6 +86,7 @@ public enum SHLLM {
 @_exported import struct MLXLMCommon.ToolParameter
 @_exported import enum MLXLMCommon.ToolParameterType
 @_exported import protocol MLXLMCommon.ToolProtocol
+@_exported import typealias Tokenizers.ToolSpec
 
 extension Chat.Message: @retroactive @unchecked Sendable {}
 
@@ -96,6 +97,8 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 @_exported import class MLXLLM.Gemma2Model
 @_exported import class MLXLLM.Gemma3TextModel
 @_exported import class MLXLLM.GemmaModel
+@_exported import class MLXLLM.GPTOSSModel
+@_exported import class MLXLLM.LFM2MoEModel
 @_exported import class MLXLLM.LlamaModel
 @_exported import protocol MLXLLM.LLMModel
 @_exported import class MLXLLM.OpenELMModel
