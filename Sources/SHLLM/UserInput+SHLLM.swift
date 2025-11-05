@@ -78,9 +78,8 @@ public extension UserInput {
     private mutating func ensureChatForm() {
         switch prompt {
         case .chat:
-            return
-        case let .messages(messages):
-            // Can't convert from messages back to chat
+            break
+        case .messages:
             assertionFailure("Cannot append chat messages after using messages form")
         case let .text(text):
             prompt = .chat([.user(text)])

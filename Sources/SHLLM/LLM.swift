@@ -156,7 +156,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                     MLX.GPU.activeMemory / 1024 / 1024
                 )
 
-                let generateStart = Date()
                 var params = GenerateParameters()
                 params.maxTokens = maxOutputTokenCount
                 params.prefillStepSize = prefillStepSize
