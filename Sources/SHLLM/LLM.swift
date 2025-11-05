@@ -7,6 +7,7 @@ import MLXLLM
 import MLXLMCommon
 import MLXNN
 import MLXVLM
+import os.log
 import Tokenizers
 
 public enum Response {
@@ -25,7 +26,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let tools: [any ToolProtocol]
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
-    private let prefillStepSize: Int?
+    private let prefillStepSize: Int
     private let customConfiguration: CustomConfiguration?
     private let responseParser: ResponseParser
 
@@ -36,7 +37,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
-        prefillStepSize: Int? = nil,
+        prefillStepSize: Int = 8192,
         customConfiguration: CustomConfiguration? = nil,
         responseParser: ResponseParser = Self.defaultParser
     ) {
@@ -83,7 +84,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
-        private let prefillStepSize: Int?
+        private let prefillStepSize: Int
         private let customConfiguration: CustomConfiguration?
         private let responseParser: ResponseParser
 
@@ -106,7 +107,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
-            prefillStepSize: Int?,
+            prefillStepSize: Int,
             customConfiguration: CustomConfiguration? = nil,
             responseParser: ResponseParser
         ) {
@@ -134,62 +135,77 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                     state = .loaded(context)
                     return try await next()
                 } catch {
+                    os_log(
+                        "failed to load model: error=%{public}s",
+                        log: log,
+                        type: .error,
+                        String(describing: error)
+                    )
                     state = .failed(error)
                     throw error
                 }
 
             case let .loaded(context):
-                print("🔧 SHLLM_GENERATE: preparing input...")
                 let input = try await context.processor.prepare(input: input)
-                print(
-                    "🔧 SHLLM_GENERATE: input prepared, starting generation with maxTokens=\(maxOutputTokenCount ?? -1)"
+                os_log(
+                    "start generation: maxTokens=%{public}d gpuCacheLimit=%{public}dMB gpuActiveMemory=%{public}dMB",
+                    log: log,
+                    type: .debug,
+                    maxInputTokenCount ?? -1,
+                    MLX.GPU.cacheLimit / 1024 / 1024,
+                    MLX.GPU.activeMemory / 1024 / 1024
                 )
-                print(
-                    "🔧 SHLLM_GENERATE: GPU cache limit: \(MLX.GPU.cacheLimit / 1024 / 1024)MB"
-                )
-                print(
-                    "🔧 SHLLM_GENERATE: GPU active memory: \(MLX.GPU.activeMemory / 1024 / 1024)MB"
-                )
+
                 let generateStart = Date()
                 var params = GenerateParameters()
                 params.maxTokens = maxOutputTokenCount
-                // Use custom prefillStepSize if provided, otherwise use adaptive default
-                // GPT-OSS has extremely slow eval(cache) between chunks, so use a very large
-                // prefillStepSize to avoid chunking entirely for typical prompts
-                params.prefillStepSize = prefillStepSize ?? 8192
+                params.prefillStepSize = prefillStepSize
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
                     context: context
                 )
-                print("🔧 SHLLM_GENERATE: generate() returned, waiting for first token...")
-                print(
-                    "🔧 SHLLM_GENERATE: GPU active memory after generate: \(MLX.GPU.activeMemory / 1024 / 1024)MB"
+
+                os_log(
+                    "waiting for first token: gpuActiveMemory=%{public}dMB",
+                    log: log,
+                    type: .debug,
+                    MLX.GPU.activeMemory / 1024 / 1024
                 )
 
                 var iterator = stream.makeAsyncIterator()
-                var tokenIndex = 0
+
+                let start = Date()
+                var didReceiveFirstToken = false
 
                 repeat {
                     guard let next = await iterator.next() else {
-                        print(
-                            "🔧 SHLLM_GENERATE: stream ended after \(tokenIndex) tokens (initial loop)"
-                        )
                         state = .finished
                         return nil
                     }
 
-                    tokenIndex += 1
-                    if tokenIndex == 1 {
-                        let ttft = Date().timeIntervalSince(generateStart)
-                        print(
-                            "⚡️ SHLLM_GENERATE: first token received after \(String(format: "%.2f", ttft))s"
+                    if !didReceiveFirstToken {
+                        didReceiveFirstToken = true
+                        os_log(
+                            "received first token: time=%.2fs: gpuActiveMemory=%{public}dMB",
+                            log: log,
+                            type: .debug,
+                            Date.now.timeIntervalSince(start),
+                            MLX.GPU.activeMemory / 1024 / 1024
                         )
-                    } else if tokenIndex % 10 == 0 {
-                        let elapsed = Date().timeIntervalSince(generateStart)
-                        let tokensPerSec = Double(tokenIndex) / elapsed
-                        print(
-                            "🔧 SHLLM_GENERATE: generated \(tokenIndex) tokens, \(String(format: "%.1f", tokensPerSec)) tok/s"
+                    }
+
+                    if case let .info(info) = next {
+                        os_log(
+                            "stream ended: promptTokenCount=%lld generationTokenCount=%lld totalTokenCount=%lld promptTime=%.2fs generationTime=%.2fs tokensPerSecond=%.2f",
+                            log: log,
+                            type: .debug,
+                            info.promptTokenCount,
+                            info.generationTokenCount,
+                            info.promptTokenCount + info.generationTokenCount,
+                            info.promptTime,
+                            info.generateTime,
+                            info.tokensPerSecond
                         )
                     }
 
@@ -212,6 +228,20 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                     guard let next = await iterator.next() else {
                         state = .finished
                         return nil
+                    }
+
+                    if case let .info(info) = next {
+                        os_log(
+                            "stream ended: promptTokenCount=%lld generationTokenCount=%lld totalTokenCount=%lld promptTime=%.2fs generationTime=%.2fs tokensPerSecond=%.2f",
+                            log: log,
+                            type: .debug,
+                            info.promptTokenCount,
+                            info.generationTokenCount,
+                            info.promptTokenCount + info.generationTokenCount,
+                            info.promptTime,
+                            info.generateTime,
+                            info.tokensPerSecond
+                        )
                     }
 
                     guard let next = responseParser.parse(next) else {
