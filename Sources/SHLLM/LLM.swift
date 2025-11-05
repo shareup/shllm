@@ -25,6 +25,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let tools: [any ToolProtocol]
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
+    private let prefillStepSize: Int?
     private let customConfiguration: CustomConfiguration?
     private let responseParser: ResponseParser
 
@@ -35,6 +36,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
+        prefillStepSize: Int? = nil,
         customConfiguration: CustomConfiguration? = nil,
         responseParser: ResponseParser = Self.defaultParser
     ) {
@@ -57,6 +59,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.tools = tools
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
+        self.prefillStepSize = prefillStepSize
         self.customConfiguration = customConfiguration
         self.responseParser = responseParser
     }
@@ -68,6 +71,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            prefillStepSize: prefillStepSize,
             customConfiguration: customConfiguration,
             responseParser: responseParser
         )
@@ -79,6 +83,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
+        private let prefillStepSize: Int?
         private let customConfiguration: CustomConfiguration?
         private let responseParser: ResponseParser
 
@@ -101,6 +106,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
+            prefillStepSize: Int?,
             customConfiguration: CustomConfiguration? = nil,
             responseParser: ResponseParser
         ) {
@@ -108,6 +114,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
+            self.prefillStepSize = prefillStepSize
             self.customConfiguration = customConfiguration
             self.responseParser = responseParser
             self.tools = tools
@@ -132,19 +139,58 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 }
 
             case let .loaded(context):
+                print("🔧 SHLLM_GENERATE: preparing input...")
                 let input = try await context.processor.prepare(input: input)
+                print(
+                    "🔧 SHLLM_GENERATE: input prepared, starting generation with maxTokens=\(maxOutputTokenCount ?? -1)"
+                )
+                print(
+                    "🔧 SHLLM_GENERATE: GPU cache limit: \(MLX.GPU.cacheLimit / 1024 / 1024)MB"
+                )
+                print(
+                    "🔧 SHLLM_GENERATE: GPU active memory: \(MLX.GPU.activeMemory / 1024 / 1024)MB"
+                )
+                let generateStart = Date()
+                var params = GenerateParameters()
+                params.maxTokens = maxOutputTokenCount
+                // Use custom prefillStepSize if provided, otherwise use adaptive default
+                // GPT-OSS has extremely slow eval(cache) between chunks, so use a very large
+                // prefillStepSize to avoid chunking entirely for typical prompts
+                params.prefillStepSize = prefillStepSize ?? 8192
                 let stream = try MLXLMCommon.generate(
                     input: input,
-                    parameters: .init(maxTokens: maxOutputTokenCount),
+                    parameters: params,
                     context: context
+                )
+                print("🔧 SHLLM_GENERATE: generate() returned, waiting for first token...")
+                print(
+                    "🔧 SHLLM_GENERATE: GPU active memory after generate: \(MLX.GPU.activeMemory / 1024 / 1024)MB"
                 )
 
                 var iterator = stream.makeAsyncIterator()
+                var tokenIndex = 0
 
                 repeat {
                     guard let next = await iterator.next() else {
+                        print(
+                            "🔧 SHLLM_GENERATE: stream ended after \(tokenIndex) tokens (initial loop)"
+                        )
                         state = .finished
                         return nil
+                    }
+
+                    tokenIndex += 1
+                    if tokenIndex == 1 {
+                        let ttft = Date().timeIntervalSince(generateStart)
+                        print(
+                            "⚡️ SHLLM_GENERATE: first token received after \(String(format: "%.2f", ttft))s"
+                        )
+                    } else if tokenIndex % 10 == 0 {
+                        let elapsed = Date().timeIntervalSince(generateStart)
+                        let tokensPerSec = Double(tokenIndex) / elapsed
+                        print(
+                            "🔧 SHLLM_GENERATE: generated \(tokenIndex) tokens, \(String(format: "%.1f", tokensPerSec)) tok/s"
+                        )
                     }
 
                     guard let next = responseParser.parse(next) else {
