@@ -202,9 +202,9 @@ extension Harmony {
             roleOverride: Harmony.Role?
         ) throws -> ParsedHeader {
             var headerString = raw
-            var channel: String? = nil
+            var channel: String?
 
-            if let range = headerString.range(of: Harmony.Token.Special.channel.rawValue) {
+            while let range = headerString.range(of: Harmony.Token.Special.channel.rawValue) {
                 let after = headerString[range.upperBound...]
                 let remainder = String(after)
                 let channelEndIndex: String.Index = if let idx = remainder
@@ -213,9 +213,7 @@ extension Harmony {
                     idx
                 } else { remainder.endIndex }
                 let value = String(remainder[..<channelEndIndex])
-                if value
-                    .isEmpty
-                {
+                if value.isEmpty {
                     throw ParserError.invalidHeader("channel marker present without value")
                 }
                 channel = value

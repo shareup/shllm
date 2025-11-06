@@ -605,6 +605,13 @@ extension LLM where Model == GPTOSSModel {
             return try Bundle.shllm.directory(named: dir)
         }
     }
+
+    static var gptOSS_20B_4bit: URL {
+        get throws {
+            let dir = "gpt-oss-20b-MXFP4-Q4"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
 }
 
 // MARK: - LFM2

@@ -17,6 +17,7 @@ ids=(
   "LFM2-8B-A1B-4bit"
   "Llama-3.2-1B-Instruct-4bit"
   "Llama-3.2-3B-Instruct-4bit"
+  "gpt-oss-20b-MXFP4-Q4"
   "lmstudio-community/gpt-oss-20b-MLX-8bit"
   "Meta-Llama-3-8B-Instruct-4bit"
   "Meta-Llama-3.1-8B-Instruct-4bit"

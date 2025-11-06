@@ -312,15 +312,38 @@ private func gptOSS_20B(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
 ) throws -> LLM<GPTOSSModel>? {
-    try loadModel(
-        directory: LLM<GPTOSSModel>.gptOSS_20B_8bit,
-        input: input,
-        tools: tools,
-        customConfiguration: { config in
-            var config = config
-            config.extraEOSTokens = ["<|call|>"]
-            return config
-        },
-        responseParser: LLM<GPTOSSModel>.gptOSSParser
-    )
+    let directories: [() throws -> URL] = [
+        { try LLM<GPTOSSModel>.gptOSS_20B_4bit },
+        { try LLM<GPTOSSModel>.gptOSS_20B_8bit },
+    ]
+
+    for directory in directories {
+        do {
+            let dir = try directory()
+            if let llm = try loadModel(
+                directory: dir,
+                input: input,
+                tools: tools,
+                customConfiguration: { config in
+                    var config = config
+                    config.extraEOSTokens = ["<|call|>"]
+                    return config
+                },
+                responseParser: LLM<GPTOSSModel>.gptOSSParser
+            ) {
+                Swift.print("ℹ️ Using GPT-OSS model:", dir.lastPathComponent)
+                return llm
+            }
+        } catch SHLLMError.directoryNotFound {
+            continue
+        } catch SHLLMError.missingBundle {
+            continue
+        }
+    }
+
+    Swift
+        .print(
+            "⚠️ GPT-OSS model not available; download gpt-oss-20b-MXFP4-Q4 or gpt-oss-20b-MLX-8bit."
+        )
+    return nil
 }

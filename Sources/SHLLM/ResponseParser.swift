@@ -117,9 +117,7 @@ public extension LLM where Model == GPTOSSModel {
                             if let toolCall = state.toolCall() {
                                 state.didSendToolCall = true
                                 return .toolCall(toolCall)
-                            } else {
-                                return nil
-                            }
+                            } else { return nil }
                         }
                     }
 
@@ -131,9 +129,15 @@ public extension LLM where Model == GPTOSSModel {
                             return .reasoning(delta)
                         } else if state.parser.channel == "final" {
                             return .text(delta)
-                        } else if state.parser.channel == "commentary",
-                                  state.parser.recipient == nil
-                        { return .text(delta) }
+                        } else if state.parser.channel == "commentary" {
+                            if let recipient = state.parser.recipient,
+                               recipient.hasPrefix("functions.")
+                            {
+                                // NOTE: Waiting for tool call materialization
+                            } else {
+                                return .text(delta)
+                            }
+                        }
                     }
 
                     guard state.hasToolCall(previousMessageCount: messageCount) else {
