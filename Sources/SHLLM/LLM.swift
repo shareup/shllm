@@ -26,7 +26,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let tools: [any ToolProtocol]
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
-    private let prefillStepSize: Int
     private let customConfiguration: CustomConfiguration?
     private let responseParser: ResponseParser
 
@@ -37,7 +36,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
-        prefillStepSize: Int = 8192,
         customConfiguration: CustomConfiguration? = nil,
         responseParser: ResponseParser = Self.defaultParser
     ) {
@@ -60,7 +58,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.tools = tools
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
-        self.prefillStepSize = prefillStepSize
         self.customConfiguration = customConfiguration
         self.responseParser = responseParser
     }
@@ -72,7 +69,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            prefillStepSize: prefillStepSize,
             customConfiguration: customConfiguration,
             responseParser: responseParser
         )
@@ -84,7 +80,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
-        private let prefillStepSize: Int
         private let customConfiguration: CustomConfiguration?
         private let responseParser: ResponseParser
 
@@ -107,7 +102,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
-            prefillStepSize: Int,
             customConfiguration: CustomConfiguration? = nil,
             responseParser: ResponseParser
         ) {
@@ -115,7 +109,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
-            self.prefillStepSize = prefillStepSize
             self.customConfiguration = customConfiguration
             self.responseParser = responseParser
             self.tools = tools
@@ -158,7 +151,6 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
 
                 var params = GenerateParameters()
                 params.maxTokens = maxOutputTokenCount
-                params.prefillStepSize = prefillStepSize
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
