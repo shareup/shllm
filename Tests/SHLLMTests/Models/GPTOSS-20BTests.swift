@@ -330,10 +330,7 @@ private func gptOSS_20B(
                     return config
                 },
                 responseParser: LLM<GPTOSSModel>.gptOSSParser
-            ) {
-                Swift.print("ℹ️ Using GPT-OSS model:", dir.lastPathComponent)
-                return llm
-            }
+            ) { return llm }
         } catch SHLLMError.directoryNotFound {
             continue
         } catch SHLLMError.missingBundle {
@@ -341,9 +338,7 @@ private func gptOSS_20B(
         }
     }
 
-    Swift
-        .print(
-            "⚠️ GPT-OSS model not available; download gpt-oss-20b-MXFP4-Q4 or gpt-oss-20b-MLX-8bit."
-        )
+    Swift.print("⚠️ gpt-oss directories do not exist")
+
     return nil
 }
