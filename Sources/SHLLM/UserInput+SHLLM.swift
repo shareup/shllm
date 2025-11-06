@@ -2,18 +2,6 @@ import Foundation
 import MLXLMCommon
 
 public extension UserInput {
-    /// Append a user message
-    mutating func appendUser(_ content: String, images: [UserInput.Image] = []) {
-        ensureChatForm()
-        appendChatMessage(.user(content, images: images))
-    }
-
-    /// Append an assistant message
-    mutating func appendAssistant(_ content: String, images: [UserInput.Image] = []) {
-        ensureChatForm()
-        appendChatMessage(.assistant(content, images: images))
-    }
-
     /// Append a generic tool-result message suitable for most models.
     mutating func appendToolResult(_ object: [String: Any]) {
         ensureMessagesForm()
@@ -73,27 +61,6 @@ public extension UserInput {
     mutating func appendHarmonyToolResult(_ payload: some Encodable) {
         let object = (try? encodeToJSONObject(payload)) ?? [:]
         appendHarmonyToolResult(object)
-    }
-
-    private mutating func ensureChatForm() {
-        switch prompt {
-        case .chat:
-            break
-        case .messages:
-            assertionFailure("Cannot append chat messages after using messages form")
-        case let .text(text):
-            prompt = .chat([.user(text)])
-        }
-    }
-
-    private mutating func appendChatMessage(_ message: Chat.Message) {
-        switch prompt {
-        case var .chat(messages):
-            messages.append(message)
-            prompt = .chat(messages)
-        case .messages, .text:
-            assertionFailure("ensureChatForm() must be called before appending")
-        }
     }
 
     private mutating func ensureMessagesForm() {

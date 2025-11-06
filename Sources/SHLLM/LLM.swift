@@ -140,28 +140,12 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
 
             case let .loaded(context):
                 let input = try await context.processor.prepare(input: input)
-                os_log(
-                    "start generation: maxTokens=%{public}d gpuCacheLimit=%{public}dMB gpuActiveMemory=%{public}dMB",
-                    log: log,
-                    type: .debug,
-                    maxInputTokenCount ?? -1,
-                    MLX.GPU.cacheLimit / 1024 / 1024,
-                    MLX.GPU.activeMemory / 1024 / 1024
-                )
-
                 var params = GenerateParameters()
                 params.maxTokens = maxOutputTokenCount
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
                     context: context
-                )
-
-                os_log(
-                    "waiting for first token: gpuActiveMemory=%{public}dMB",
-                    log: log,
-                    type: .debug,
-                    MLX.GPU.activeMemory / 1024 / 1024
                 )
 
                 var iterator = stream.makeAsyncIterator()
