@@ -54,6 +54,7 @@ let package = Package(
 //                .copy("Resources/gemma-3-4b-it-qat-3bit"),
 //                .copy("Resources/gemma-3-4b-it-qat-4bit"),
 //                .copy("Resources/gpt-oss-20b-MLX-8bit"),
+//                .copy("Resources/gpt-oss-20b-MXFP4-Q4"),
 //                .copy("Resources/LFM2-8B-A1B-4bit"),
 //                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
 //                .copy("Resources/Llama-3.2-3B-Instruct-4bit"),

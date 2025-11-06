@@ -1,5 +1,6 @@
 import Foundation
 import MLXLMCommon
+import os.log
 import Synchronized
 
 func loadModelContext(
@@ -13,6 +14,13 @@ func loadModelContext(
             //       we may as well release our reference to it. If a client
             //       is still using it, their strong reference to the model
             //       will keep it alive as long as needed.
+            os_log(
+                "clear cache: old=%{public}s new=%{public}s",
+                log: log,
+                type: .debug,
+                modelCache.currentDirectory?.lastPathComponent ?? "nil",
+                directory.lastPathComponent
+            )
             modelCache.clear()
             return nil
         }
@@ -20,8 +28,23 @@ func loadModelContext(
     }
 
     if let model {
+        os_log(
+            "use cached model: directory=%{public}s",
+            log: log,
+            type: .debug,
+            directory.lastPathComponent
+        )
         return model.context
     } else {
+        os_log(
+            "load model: directory=%{public}s",
+            log: log,
+            type: .debug,
+            directory.lastPathComponent
+        )
+
+        let start = Date()
+
         try SHLLM.assertSupportedDevice
         let baseContext = try await loadModel(directory: directory)
 
@@ -46,6 +69,13 @@ func loadModelContext(
             context: context
         )
         cache.access { $0.replace(with: model) }
+
+        os_log(
+            "loaded model: loadTime=%{public}.2fs",
+            log: log,
+            type: .debug,
+            Date.now.timeIntervalSince(start)
+        )
 
         return context
     }
@@ -84,6 +114,15 @@ private struct CachedModel {
 private enum Cache {
     case disabled
     case enabled(CachedModel?)
+
+    var currentDirectory: URL? {
+        switch self {
+        case .disabled:
+            nil
+        case let .enabled(cachedModel):
+            cachedModel?.directory
+        }
+    }
 
     mutating func enable() {
         switch self {

@@ -7,6 +7,7 @@ import MLXLLM
 import MLXLMCommon
 import MLXNN
 import MLXVLM
+import os.log
 import Tokenizers
 
 public enum Response {
@@ -127,24 +128,60 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                     state = .loaded(context)
                     return try await next()
                 } catch {
+                    os_log(
+                        "failed to load model: error=%{public}s",
+                        log: log,
+                        type: .error,
+                        String(describing: error)
+                    )
                     state = .failed(error)
                     throw error
                 }
 
             case let .loaded(context):
                 let input = try await context.processor.prepare(input: input)
+                var params = GenerateParameters()
+                params.maxTokens = maxOutputTokenCount
                 let stream = try MLXLMCommon.generate(
                     input: input,
-                    parameters: .init(maxTokens: maxOutputTokenCount),
+                    parameters: params,
                     context: context
                 )
 
                 var iterator = stream.makeAsyncIterator()
 
+                let start = Date()
+                var didReceiveFirstToken = false
+
                 repeat {
                     guard let next = await iterator.next() else {
                         state = .finished
                         return nil
+                    }
+
+                    if !didReceiveFirstToken {
+                        didReceiveFirstToken = true
+                        os_log(
+                            "received first token: time=%.2fs: gpuActiveMemory=%{public}dMB",
+                            log: log,
+                            type: .debug,
+                            Date.now.timeIntervalSince(start),
+                            MLX.GPU.activeMemory / 1024 / 1024
+                        )
+                    }
+
+                    if case let .info(info) = next {
+                        os_log(
+                            "stream ended: promptTokenCount=%lld generationTokenCount=%lld totalTokenCount=%lld promptTime=%.2fs generationTime=%.2fs tokensPerSecond=%.2f",
+                            log: log,
+                            type: .debug,
+                            info.promptTokenCount,
+                            info.generationTokenCount,
+                            info.promptTokenCount + info.generationTokenCount,
+                            info.promptTime,
+                            info.generateTime,
+                            info.tokensPerSecond
+                        )
                     }
 
                     guard let next = responseParser.parse(next) else {
@@ -166,6 +203,20 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                     guard let next = await iterator.next() else {
                         state = .finished
                         return nil
+                    }
+
+                    if case let .info(info) = next {
+                        os_log(
+                            "stream ended: promptTokenCount=%lld generationTokenCount=%lld totalTokenCount=%lld promptTime=%.2fs generationTime=%.2fs tokensPerSecond=%.2f",
+                            log: log,
+                            type: .debug,
+                            info.promptTokenCount,
+                            info.generationTokenCount,
+                            info.promptTokenCount + info.generationTokenCount,
+                            info.promptTime,
+                            info.generateTime,
+                            info.tokensPerSecond
+                        )
                     }
 
                     guard let next = responseParser.parse(next) else {
@@ -527,6 +578,13 @@ extension LLM where Model == GPTOSSModel {
     static var gptOSS_20B_8bit: URL {
         get throws {
             let dir = "gpt-oss-20b-MLX-8bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var gptOSS_20B_4bit: URL {
+        get throws {
+            let dir = "gpt-oss-20b-MXFP4-Q4"
             return try Bundle.shllm.directory(named: dir)
         }
     }

@@ -58,7 +58,10 @@ public enum Python {
         }
 
         while k < copy.endIndex,
-              copy[k] == "]" || copy[k].isWhitespace { k = copy.index(after: k) }
+              copy[k] == "]" || copy[k].isWhitespace
+        {
+            k = copy.index(after: k)
+        }
 
         buffer = String(copy[k...])
         return call
