@@ -74,7 +74,7 @@ func loadModelContext(
             "loaded model: loadTime=%{public}.2fs",
             log: log,
             type: .debug,
-            Date().timeIntervalSince(start)
+            Date.now.timeIntervalSince(start)
         )
 
         return context
