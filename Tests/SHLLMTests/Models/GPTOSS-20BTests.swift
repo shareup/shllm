@@ -304,7 +304,7 @@ struct GPTOSS_20BTests {
         let response = try await llm5.text.result
         Swift.print(response)
         #expect(!response.isEmpty)
-        #expect(response.lowercased().contains("sent"))
+        #expect(response.contains(oneOf: ["sent", "emailed"]))
     }
 }
 

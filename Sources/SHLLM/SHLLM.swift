@@ -80,6 +80,8 @@ public enum SHLLM {
 @_exported import struct MLXLMCommon.Message
 @_exported import struct MLXLMCommon.UserInput
 
+@_exported import struct MLXLMCommon.GenerateParameters
+
 @_exported import enum MLXLMCommon.JSONValue
 @_exported import struct MLXLMCommon.Tool
 @_exported import struct MLXLMCommon.ToolCall

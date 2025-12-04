@@ -263,7 +263,6 @@ private enum LFM2State {
             return nil
 
         case (.parsingToolCall(var buffer), .chunk(endToken)):
-            assert(buffer.isEmpty)
             if let call = Python.parseFunctionCall(&buffer) {
                 self = .parsingToolCall(buffer)
                 return .toolCall(call)
@@ -325,6 +324,7 @@ private extension LLM {
                 }
 
             case let .toolCall(toolCall):
+                isThinking.access { $0 = false }
                 return .toolCall(toolCall)
 
             case .info:

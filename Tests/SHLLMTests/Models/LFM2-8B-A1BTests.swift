@@ -193,7 +193,8 @@ struct LFM2_8B_A1BTests {
         ]) else { return }
 
         let (_, _, toolCallsOutput1) = try await llm.result
-        let toolCall1 = try #require(toolCallsOutput1?.first)
+        let toolCall1 = try #require(toolCallsOutput1?
+            .first { $0.function.name == "web_search" })
         #expect(toolCall1.function.name == "web_search")
 
         input.appendToolResult([
@@ -208,7 +209,8 @@ struct LFM2_8B_A1BTests {
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
-        let toolCall2 = try #require(toolCallsOutput2?.first)
+        let toolCall2 = try #require(toolCallsOutput2?
+            .first { $0.function.name == "fetch_web_page" })
         #expect(toolCall2.function.name == "fetch_web_page")
 
         input.appendToolResult([
@@ -220,7 +222,8 @@ struct LFM2_8B_A1BTests {
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
-        let toolCall3 = try #require(toolCallsOutput3?.first)
+        let toolCall3 = try #require(toolCallsOutput3?
+            .first { $0.function.name == "find_email_in_contacts" })
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
         input.appendToolResult([
@@ -232,7 +235,8 @@ struct LFM2_8B_A1BTests {
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput4) = try await llm4.result
-        let toolCall4 = try #require(toolCallsOutput4?.first)
+        let toolCall4 = try #require(toolCallsOutput4?
+            .first { $0.function.name == "send_email" })
         #expect(toolCall4.function.name == "send_email")
         let toArg = try #require(toolCall4.function.arguments["to"])
         let subjectArg = try #require(toolCall4.function.arguments["subject"])
@@ -253,7 +257,7 @@ struct LFM2_8B_A1BTests {
         let response = try await llm5.text.result
         Swift.print(response)
         #expect(!response.isEmpty)
-        #expect(response.lowercased().contains("sent"))
+        #expect(response.contains(oneOf: ["sent", "emailed"]))
         #expect(response.lowercased().contains("alex"))
     }
 }

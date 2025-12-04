@@ -27,6 +27,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
     private let customConfiguration: CustomConfiguration?
+    private let generateParameters: GenerateParameters
     private let responseParser: ResponseParser
 
     public init(
@@ -37,6 +38,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil,
+        generateParameters: GenerateParameters = GenerateParameters(),
         responseParser: ResponseParser = Self.defaultParser
     ) {
         self.directory = directory
@@ -59,6 +61,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
         self.customConfiguration = customConfiguration
+        self.generateParameters = generateParameters
         self.responseParser = responseParser
     }
 
@@ -69,6 +72,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             customConfiguration: customConfiguration,
             responseParser: responseParser
         )
@@ -80,6 +84,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
+        private let generateParameters: GenerateParameters
         private let customConfiguration: CustomConfiguration?
         private let responseParser: ResponseParser
 
@@ -102,6 +107,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
+            generateParameters: GenerateParameters,
             customConfiguration: CustomConfiguration? = nil,
             responseParser: ResponseParser
         ) {
@@ -109,6 +115,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
+            self.generateParameters = generateParameters
             self.customConfiguration = customConfiguration
             self.responseParser = responseParser
             self.tools = tools
@@ -140,8 +147,10 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
 
             case let .loaded(context):
                 let input = try await context.processor.prepare(input: input)
-                var params = GenerateParameters()
-                params.maxTokens = maxOutputTokenCount
+                var params = generateParameters
+                if let maxOutputTokenCount {
+                    params.maxTokens = maxOutputTokenCount
+                }
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
@@ -310,6 +319,12 @@ public extension LLM {
                 return nil
             }
         }
+    }
+}
+
+public extension LLM {
+    static var generateParameters: GenerateParameters {
+        GenerateParameters()
     }
 }
 
@@ -607,7 +622,15 @@ extension LLM where Model == LFM2MoEModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: lfm2Parser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.3,
+            repetitionPenalty: 1.05
         )
     }
 
@@ -915,7 +938,15 @@ extension LLM where Model == Qwen3Model {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: qwen3Parser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.6,
+            topP: 0.95
         )
     }
 
@@ -965,7 +996,15 @@ extension LLM where Model == Qwen3MoEModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: qwen3MoEParser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.6,
+            topP: 0.95
         )
     }
 
