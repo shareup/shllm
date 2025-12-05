@@ -778,6 +778,36 @@ extension LLM where Model == OpenELMModel {
     }
 }
 
+// MARK: - Orchestrator
+
+extension LLM where Model == Qwen3Model {
+    public static func orchestrator(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3Parser
+        )
+    }
+
+    static var orchestrator_8B: URL {
+        get throws {
+            let dir = "Orchestrator-8B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
 // MARK: - Phi
 
 extension LLM where Model == PhiModel {
@@ -945,6 +975,7 @@ extension LLM where Model == Qwen3Model {
 
     static var generateParameters: GenerateParameters {
         GenerateParameters(
+            maxTokens: 32_768,
             temperature: 0.6,
             topP: 0.95
         )
@@ -1003,6 +1034,7 @@ extension LLM where Model == Qwen3MoEModel {
 
     static var generateParameters: GenerateParameters {
         GenerateParameters(
+            maxTokens: 32_768,
             temperature: 0.6,
             topP: 0.95
         )
@@ -1039,6 +1071,52 @@ extension LLM where Model == LlamaModel {
     static var smolLM: URL {
         get throws {
             let dir = "SmolLM-135M-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Qwen3 VL
+
+extension LLM where Model == Qwen3VL {
+    public static func qwen3VL(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3VL> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3VLParser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 40_960,
+            temperature: 1.0,
+            topP: 0.95,
+            repetitionPenalty: 1.0
+        )
+    }
+
+    static var qwen3VL_2B: URL {
+        get throws {
+            let dir = "Qwen3-VL-2B-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3VL_4B_Thinking: URL {
+        get throws {
+            let dir = "Qwen3-VL-4B-Thinking-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

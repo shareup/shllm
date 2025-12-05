@@ -5,6 +5,7 @@ import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
+import class MLXVLM.Qwen3VL
 import Synchronized
 
 public extension LLM {
@@ -68,6 +69,10 @@ public extension LLM where Model == Qwen3Model {
 
 public extension LLM where Model == Qwen3MoEModel {
     static var qwen3MoEParser: ResponseParser = defaultThinkingParser
+}
+
+public extension LLM where Model == Qwen3VL {
+    static var qwen3VLParser: ResponseParser = defaultThinkingParser
 }
 
 public extension LLM where Model == GPTOSSModel {
