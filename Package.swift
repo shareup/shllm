@@ -13,11 +13,11 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/apple/swift-async-algorithms",
-            from: "1.0.4"
+            from: "1.1.1"
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.15"
+            from: "0.0.16"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
