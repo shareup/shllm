@@ -627,6 +627,11 @@ extension LLM where Model == LFM2MoEModel {
         )
     }
 
+    // https://huggingface.co/LiquidAI/LFM2-8B-A1B
+    //
+    // - temperature=0.3
+    // - min_p=0.15
+    // - repetition_penalty=1.05
     static var generateParameters: GenerateParameters {
         GenerateParameters(
             temperature: 0.3,
@@ -973,6 +978,21 @@ extension LLM where Model == Qwen3Model {
         )
     }
 
+    // https://huggingface.co/Qwen/Qwen3-4B-MLX-4bit
+    //
+    // # Thinking mode
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
+    //
+    // # Non-thinking model
+    //
+    // - temperature=0.7
+    // - topP=0.8
+    // - topK=20
+    // - minP=0
     static var generateParameters: GenerateParameters {
         GenerateParameters(
             maxTokens: 32_768,
@@ -1032,6 +1052,21 @@ extension LLM where Model == Qwen3MoEModel {
         )
     }
 
+    // https://huggingface.co/Qwen/Qwen3-30B-A3B-MLX-4bit
+    //
+    // # Thinking mode
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
+    //
+    // # Non-thinking model
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
     static var generateParameters: GenerateParameters {
         GenerateParameters(
             maxTokens: 32_768,
@@ -1098,11 +1133,32 @@ extension LLM where Model == Qwen3VL {
         )
     }
 
+    // https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct
+    //
+    // # VL
+    //
+    // - greedy='false'
+    // - top_p=0.8
+    // - top_k=20
+    // - temperature=0.7
+    // - repetition_penalty=1.0
+    // - presence_penalty=1.5
+    // - out_seq_length=16384
+    //
+    // # Text
+    //
+    // - greedy='false'
+    // - top_p=1.0
+    // - top_k=40
+    // - repetition_penalty=1.0
+    // - presence_penalty=2.0
+    // - temperature=1.0
+    // - out_seq_length=32768
     static var generateParameters: GenerateParameters {
         GenerateParameters(
-            maxTokens: 40_960,
-            temperature: 1.0,
-            topP: 0.95,
+            maxTokens: 16_384,
+            temperature: 0.7,
+            topP: 0.8,
             repetitionPenalty: 1.0
         )
     }
