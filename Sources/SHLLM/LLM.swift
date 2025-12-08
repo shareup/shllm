@@ -27,6 +27,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
     private let maxInputTokenCount: Int?
     private let maxOutputTokenCount: Int?
     private let customConfiguration: CustomConfiguration?
+    private let generateParameters: GenerateParameters
     private let responseParser: ResponseParser
 
     public init(
@@ -37,6 +38,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         maxInputTokenCount: Int? = nil,
         maxOutputTokenCount: Int? = nil,
         customConfiguration: CustomConfiguration? = nil,
+        generateParameters: GenerateParameters = GenerateParameters(),
         responseParser: ResponseParser = Self.defaultParser
     ) {
         self.directory = directory
@@ -59,6 +61,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         self.maxInputTokenCount = maxInputTokenCount
         self.maxOutputTokenCount = maxOutputTokenCount
         self.customConfiguration = customConfiguration
+        self.generateParameters = generateParameters
         self.responseParser = responseParser
     }
 
@@ -69,6 +72,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             customConfiguration: customConfiguration,
             responseParser: responseParser
         )
@@ -80,6 +84,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
         private let tools: [any ToolProtocol]
         private let maxInputTokenCount: Int?
         private let maxOutputTokenCount: Int?
+        private let generateParameters: GenerateParameters
         private let customConfiguration: CustomConfiguration?
         private let responseParser: ResponseParser
 
@@ -102,6 +107,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             tools: [any ToolProtocol] = [],
             maxInputTokenCount: Int?,
             maxOutputTokenCount: Int?,
+            generateParameters: GenerateParameters,
             customConfiguration: CustomConfiguration? = nil,
             responseParser: ResponseParser
         ) {
@@ -109,6 +115,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
             self.input = input
             self.maxInputTokenCount = maxInputTokenCount
             self.maxOutputTokenCount = maxOutputTokenCount
+            self.generateParameters = generateParameters
             self.customConfiguration = customConfiguration
             self.responseParser = responseParser
             self.tools = tools
@@ -140,8 +147,10 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
 
             case let .loaded(context):
                 let input = try await context.processor.prepare(input: input)
-                var params = GenerateParameters()
-                params.maxTokens = maxOutputTokenCount
+                var params = generateParameters
+                if let maxOutputTokenCount {
+                    params.maxTokens = maxOutputTokenCount
+                }
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
@@ -310,6 +319,12 @@ public extension LLM {
                 return nil
             }
         }
+    }
+}
+
+public extension LLM {
+    static var generateParameters: GenerateParameters {
+        GenerateParameters()
     }
 }
 
@@ -607,7 +622,20 @@ extension LLM where Model == LFM2MoEModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: lfm2Parser
+        )
+    }
+
+    // https://huggingface.co/LiquidAI/LFM2-8B-A1B
+    //
+    // - temperature=0.3
+    // - min_p=0.15
+    // - repetition_penalty=1.05
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.3,
+            repetitionPenalty: 1.05
         )
     }
 
@@ -750,6 +778,36 @@ extension LLM where Model == OpenELMModel {
     static var openELM: URL {
         get throws {
             let dir = "OpenELM-270M-Instruct"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Orchestrator
+
+extension LLM where Model == Qwen3Model {
+    public static func orchestrator(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3Model> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3Parser
+        )
+    }
+
+    static var orchestrator_8B: URL {
+        get throws {
+            let dir = "Orchestrator-8B-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
@@ -915,7 +973,31 @@ extension LLM where Model == Qwen3Model {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: qwen3Parser
+        )
+    }
+
+    // https://huggingface.co/Qwen/Qwen3-4B-MLX-4bit
+    //
+    // # Thinking mode
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
+    //
+    // # Non-thinking model
+    //
+    // - temperature=0.7
+    // - topP=0.8
+    // - topK=20
+    // - minP=0
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 32_768,
+            temperature: 0.6,
+            topP: 0.95
         )
     }
 
@@ -965,7 +1047,31 @@ extension LLM where Model == Qwen3MoEModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
             responseParser: qwen3MoEParser
+        )
+    }
+
+    // https://huggingface.co/Qwen/Qwen3-30B-A3B-MLX-4bit
+    //
+    // # Thinking mode
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
+    //
+    // # Non-thinking model
+    //
+    // - temperature=0.6
+    // - topP=0.95
+    // - topK=20
+    // - minP=0
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 32_768,
+            temperature: 0.6,
+            topP: 0.95
         )
     }
 
@@ -1000,6 +1106,73 @@ extension LLM where Model == LlamaModel {
     static var smolLM: URL {
         get throws {
             let dir = "SmolLM-135M-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Qwen3 VL
+
+extension LLM where Model == Qwen3VL {
+    public static func qwen3VL(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen3VL> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3VLParser
+        )
+    }
+
+    // https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct
+    //
+    // # VL
+    //
+    // - greedy='false'
+    // - top_p=0.8
+    // - top_k=20
+    // - temperature=0.7
+    // - repetition_penalty=1.0
+    // - presence_penalty=1.5
+    // - out_seq_length=16384
+    //
+    // # Text
+    //
+    // - greedy='false'
+    // - top_p=1.0
+    // - top_k=40
+    // - repetition_penalty=1.0
+    // - presence_penalty=2.0
+    // - temperature=1.0
+    // - out_seq_length=32768
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 16_384,
+            temperature: 0.7,
+            topP: 0.8,
+            repetitionPenalty: 1.0
+        )
+    }
+
+    static var qwen3VL_2B: URL {
+        get throws {
+            let dir = "Qwen3-VL-2B-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3VL_4B_Thinking: URL {
+        get throws {
+            let dir = "Qwen3-VL-4B-Thinking-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

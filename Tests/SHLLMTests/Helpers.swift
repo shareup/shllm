@@ -1,4 +1,5 @@
 import Foundation
+import MLXLMCommon
 import protocol MLXLMCommon.LanguageModel
 import SHLLM
 
@@ -23,6 +24,7 @@ func loadModel<M: LanguageModel>(
                 tools: tools,
                 maxOutputTokenCount: maxOutputTokenCount(),
                 customConfiguration: customConfiguration,
+                generateParameters: LLM<M>.generateParameters,
                 responseParser: responseParser
             )
         } catch let SHLLMError.directoryNotFound(name) {
@@ -59,6 +61,17 @@ func imageInput(
         ),
         .user(message, images: [.url(image)]),
     ])
+}
+
+extension String {
+    func contains(oneOf substrings: [String]) -> Bool {
+        for substring in substrings {
+            if localizedCaseInsensitiveContains(substring) {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 struct WeatherArguments: Codable, CustomStringConvertible, Hashable, Sendable {

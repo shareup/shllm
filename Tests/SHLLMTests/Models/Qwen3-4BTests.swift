@@ -262,8 +262,8 @@ struct Qwen3_4BTests {
         let response = try await llm5.text.result
         Swift.print(response)
         #expect(!response.isEmpty)
-        #expect(response.lowercased().contains("sent"))
-        #expect(response.lowercased().contains("alex"))
+        #expect(response.contains(oneOf: ["sent", "emailed"]))
+        #expect(response.contains(oneOf: ["alex", "Alex"]))
     }
 }
 

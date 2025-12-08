@@ -24,6 +24,7 @@ ids=(
   "Mistral-7B-Instruct-v0.3-4bit"
   "Mistral-Nemo-Instruct-2407-4bit"
   "OpenELM-270M-Instruct"
+  "Orchestrator-8B-4bit"
   "phi-2-hf-4bit-mlx"
   "Phi-3.5-mini-instruct-4bit"
   "Phi-3.5-MoE-instruct-4bit"
@@ -36,6 +37,8 @@ ids=(
   "Qwen3-30B-A3B-4bit"
   "Qwen3-4B-4bit"
   "Qwen3-8B-4bit"
+  "Qwen3-VL-2B-Instruct-4bit"
+  "Qwen3-VL-4B-Thinking-4bit"
   "SmolLM-135M-Instruct-4bit"
 )
 

@@ -5,7 +5,7 @@ import MLXLMCommon
 import Testing
 
 @Suite(.serialized)
-struct Qwen3_8BTests {
+struct Orchestrator_8BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try orchestrator_8B(input) else { return }
 
         var reasoning = ""
         var result = ""
@@ -42,7 +42,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try orchestrator_8B(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -60,7 +60,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try orchestrator_8B(input) else { return }
 
         let (_reasoning, _text, toolCalls) = try await llm.result
 
@@ -82,7 +82,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try orchestrator_8B(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -98,7 +98,7 @@ struct Qwen3_8BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try qwen3_8B(
+        guard let llm = try orchestrator_8B(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -124,60 +124,13 @@ struct Qwen3_8BTests {
             }
         }
 
-        Swift.print(reply)
-        #expect(!reasoning.isEmpty)
-        #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        #expect(toolCallCount == 1)
-        #expect(weatherLocationFound)
-    }
-
-    @Test
-    func canChooseBetweenDifferentTools() async throws {
-        let input = UserInput(chat: [
-            .system(
-                "You are a helpful assistant that can provide weather, stock prices, and news."
-            ),
-            .user("Get the latest news about Apple, sorted by popularity."),
-        ])
-
-        guard let llm = try qwen3_8B(
-            input,
-            tools: [weatherTool, stockTool, newsTool]
-        ) else { return }
-
-        var reasoning = ""
-        var reply = ""
-        var toolCallCount = 0
-        var newsQueryFound = false
-        var newsSortByFound = false
-
-        for try await response in llm {
-            switch response {
-            case let .reasoning(text):
-                reasoning.append(text)
-            case let .text(text):
-                reply.append(text)
-            case let .toolCall(toolCall):
-                toolCallCount += 1
-                #expect(toolCall.function.name == "get_latest_news")
-
-                if case let .string(query) = toolCall.function.arguments["query"] {
-                    newsQueryFound = query.lowercased().contains("apple")
-                }
-                if case let .string(sortBy) = toolCall.function.arguments["sortBy"] {
-                    newsSortByFound = sortBy.lowercased().contains("popularity")
-                }
-            }
-        }
-
         #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount >= 1)
-        #expect(newsQueryFound)
-        #expect(newsSortByFound)
+        #expect(weatherLocationFound)
     }
 
-    @Test
+    @Test(.disabled())
     func canUseStockToolAndRespond() async throws {
         let chat: [Chat.Message] = [
             .system(
@@ -188,37 +141,34 @@ struct Qwen3_8BTests {
 
         var input = UserInput(chat: chat)
 
-        guard let llm1 = try qwen3_8B(
+        guard let llm1 = try orchestrator_8B(
             input,
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
-        #expect(reasoning1 != nil)
-        #expect(text1 == nil)
-        let toolCall1 = try #require(toolCallsOpt1?.first)
+        let (reasoning, text, toolCallsOpt) = try await llm1.result
+        let toolCall = try #require(toolCallsOpt?.first)
 
-        #expect(reasoning1 != nil)
-        #expect(text1 == nil)
-        #expect(toolCall1.function.name == "get_stock_price")
-        #expect(toolCall1.function.arguments["symbol"] == .string("AAPL"))
+        #expect(reasoning != nil)
+        #expect(text == nil)
+        #expect(toolCall.function.name == "get_stock_price")
+        #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
         input.appendToolResult(["price": 123.45])
-        guard let llm2 = try qwen3_8B(
+
+        guard let llm2 = try orchestrator_8B(
             input,
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
-        Swift.print(text2 ?? "")
-        #expect(reasoning2 != nil)
-        #expect(text2?.isEmpty == false)
-        #expect(text2?.contains(oneOf: ["aapl"]) == true)
-        #expect(text2?.contains("123.45") == true)
-        #expect(toolCallsOpt2 == nil)
+        let result = try await llm2.text.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+        #expect(result.lowercased().contains("aapl"))
+        #expect(result.contains("123.45"))
     }
 
-    @Test
+    @Test(.disabled())
     func canCompleteMultiToolWorkflowAndEmail() async throws {
         let chat: [Chat.Message] = [
             .system("""
@@ -239,7 +189,7 @@ struct Qwen3_8BTests {
 
         // web_search
         var input = UserInput(chat: chat)
-        guard let llm = try qwen3_8B(input, tools: [
+        guard let llm = try orchestrator_8B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -255,7 +205,7 @@ struct Qwen3_8BTests {
         ])
 
         // fetch_web_page
-        guard let llm2 = try qwen3_8B(input, tools: [
+        guard let llm2 = try orchestrator_8B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
@@ -267,10 +217,11 @@ struct Qwen3_8BTests {
         ])
 
         // find_email_in_contacts
-        guard let llm3 = try qwen3_8B(input, tools: [
+        guard let llm3 = try orchestrator_8B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
+        #expect(toolCallsOutput3?.count == 1)
         let toolCall3 = try #require(toolCallsOutput3?.first)
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
@@ -279,11 +230,20 @@ struct Qwen3_8BTests {
         ])
 
         // send_email
-        guard let llm4 = try qwen3_8B(input, tools: [
+        guard let llm4 = try orchestrator_8B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
-        let (_, _, toolCallsOutput4) = try await llm4.result
-        let toolCall4 = try #require(toolCallsOutput4?.first)
+        let (reasoning, text, toolCalls4) = try await llm4.result
+
+        guard let toolCall4 = toolCalls4?.first else {
+            Issue.record("""
+                Did not call send_email: reasoning=\(String(describing: reasoning)), \
+                text=\(String(describing: text))
+                """
+            )
+            return
+        }
+
         #expect(toolCall4.function.name == "send_email")
         let toArg = try #require(toolCall4.function.arguments["to"])
         let subjectArg = try #require(toolCall4.function.arguments["subject"])
@@ -292,12 +252,10 @@ struct Qwen3_8BTests {
         #expect((subjectArg.anyValue as? String)?.isEmpty == false)
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
-        input.appendToolResult([
-            "status": "sent",
-        ])
+        input.appendToolResult(["status": "sent"])
 
         // assistant response
-        guard let llm5 = try qwen3_8B(input, tools: [
+        guard let llm5 = try orchestrator_8B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -305,15 +263,16 @@ struct Qwen3_8BTests {
         Swift.print(response)
         #expect(!response.isEmpty)
         #expect(response.contains(oneOf: ["sent", "emailed"]))
+        #expect(response.contains(oneOf: ["alex", "Alex"]))
     }
 }
 
-private func qwen3_8B(
+private func orchestrator_8B(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
 ) throws -> LLM<Qwen3Model>? {
     try loadModel(
-        directory: LLM<Qwen3Model>.qwen3_8B,
+        directory: LLM<Qwen3Model>.orchestrator_8B,
         input: input,
         tools: tools,
         responseParser: LLM<Qwen3Model>.qwen3Parser

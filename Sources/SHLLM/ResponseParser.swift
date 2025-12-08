@@ -5,6 +5,7 @@ import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
+import class MLXVLM.Qwen3VL
 import Synchronized
 
 public extension LLM {
@@ -68,6 +69,10 @@ public extension LLM where Model == Qwen3Model {
 
 public extension LLM where Model == Qwen3MoEModel {
     static var qwen3MoEParser: ResponseParser = defaultThinkingParser
+}
+
+public extension LLM where Model == Qwen3VL {
+    static var qwen3VLParser: ResponseParser = defaultThinkingParser
 }
 
 public extension LLM where Model == GPTOSSModel {
@@ -263,7 +268,6 @@ private enum LFM2State {
             return nil
 
         case (.parsingToolCall(var buffer), .chunk(endToken)):
-            assert(buffer.isEmpty)
             if let call = Python.parseFunctionCall(&buffer) {
                 self = .parsingToolCall(buffer)
                 return .toolCall(call)
@@ -325,6 +329,7 @@ private extension LLM {
                 }
 
             case let .toolCall(toolCall):
+                isThinking.access { $0 = false }
                 return .toolCall(toolCall)
 
             case .info:

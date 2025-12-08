@@ -13,11 +13,11 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/apple/swift-async-algorithms",
-            from: "1.0.4"
+            from: "1.1.1"
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.15"
+            from: "0.0.16"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
@@ -66,11 +66,14 @@ let package = Package(
 //                .copy("Resources/Qwen1.5-0.5B-Chat-4bit"),
 //                .copy("Resources/Qwen2.5-1.5B-Instruct-4bit"),
 //                .copy("Resources/Qwen2.5-7B-Instruct-4bit"),
+//                .copy("Resources/Orchestrator-8B-4bit"),
 //                .copy("Resources/Qwen3-0.6B-4bit"),
 //                .copy("Resources/Qwen3-1.7B-4bit"),
 //                .copy("Resources/Qwen3-30B-A3B-4bit"),
 //                .copy("Resources/Qwen3-4B-4bit"),
 //                .copy("Resources/Qwen3-8B-4bit"),
+//                .copy("Resources/Qwen3-VL-2B-Instruct-4bit"),
+//                .copy("Resources/Qwen3-VL-4B-Thinking-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
