@@ -4,7 +4,7 @@ import MLXVLM
 import Testing
 
 @Suite(.serialized)
-struct Qwen3VL_4BTests {
+struct Qwen3VL_4B_InstructTests {
     @Test
     func canStreamResult() async throws {
         guard SHLLM.isSupportedDevice else {
@@ -17,22 +17,13 @@ struct Qwen3VL_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3VL_4B(input: input) else { return }
+        guard let llm = try qwen3VL_4B_Instruct(input: input) else { return }
 
-        var reasoning = ""
         var response = ""
-        for try await reply in llm {
-            switch reply {
-            case let .reasoning(text):
-                reasoning.append(text)
-            case let .text(text):
-                response.append(text)
-            case .toolCall:
-                Issue.record()
-            }
+        for try await token in llm.text {
+            response += token
         }
 
-        Swift.print("<think>\n\(reasoning)\n</think>")
         Swift.print(response)
         #expect(!response.isEmpty)
     }
@@ -49,7 +40,7 @@ struct Qwen3VL_4BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3VL_4B(input: input) else { return }
+        guard let llm = try qwen3VL_4B_Instruct(input: input) else { return }
 
         let response = try await llm.text.result
 
@@ -66,7 +57,7 @@ struct Qwen3VL_4BTests {
         }
 
         let data = try authenticationFactors
-        guard let llm = try qwen3VL_4B(image: data) else { return }
+        guard let llm = try qwen3VL_4B_Instruct(image: data) else { return }
 
         var response = ""
         for try await token in llm.text {
@@ -86,7 +77,7 @@ struct Qwen3VL_4BTests {
         }
 
         let url = try authenticationFactorsURL
-        guard let llm = try qwen3VL_4B(image: url) else { return }
+        guard let llm = try qwen3VL_4B_Instruct(image: url) else { return }
 
         var response = ""
         for try await token in llm.text {
@@ -98,34 +89,34 @@ struct Qwen3VL_4BTests {
     }
 }
 
-private extension Qwen3VL_4BTests {
-    func qwen3VL_4B(
+private extension Qwen3VL_4B_InstructTests {
+    func qwen3VL_4B_Instruct(
         input: UserInput
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_4B_Thinking,
+            directory: LLM.qwen3VL_4B_Instruct,
             input: input,
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLInstructParser
         )
     }
 
-    func qwen3VL_4B(
+    func qwen3VL_4B_Instruct(
         image: Data
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_4B_Thinking,
+            directory: LLM.qwen3VL_4B_Instruct,
             input: imageInput(image),
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLInstructParser
         )
     }
 
-    func qwen3VL_4B(
+    func qwen3VL_4B_Instruct(
         image: URL
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_4B_Thinking,
+            directory: LLM.qwen3VL_4B_Instruct,
             input: imageInput(image),
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLInstructParser
         )
     }
 

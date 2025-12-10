@@ -32,47 +32,20 @@ public extension LLM {
 }
 
 public extension LLM where Model == Qwen2Model {
-    static var deepSeekR1Parser: ResponseParser {
-        // NOTE: DeepSeek R1 starts in thinking mode.
-        let isThinking = Locked(true)
-        let tokensToIgnore = Set(["<think>", "<think>\n"])
-        let end = Set(["</think>", "</think>\n"])
-        return ResponseParser { (generation: Generation) -> Response? in
-            isThinking.access { isThinking -> Response? in
-                switch generation {
-                case let .chunk(chunk):
-                    if tokensToIgnore.contains(chunk) {
-                        return nil
-                    } else if end.contains(chunk) {
-                        isThinking = false
-                        return nil
-                    } else if isThinking {
-                        return .reasoning(chunk)
-                    } else {
-                        return .text(chunk)
-                    }
-
-                case let .toolCall(toolCall):
-                    return .toolCall(toolCall)
-
-                case .info:
-                    return nil
-                }
-            }
-        }
-    }
+    static var deepSeekR1Parser = defaultsToThinkingParser
 }
 
 public extension LLM where Model == Qwen3Model {
-    static var qwen3Parser: ResponseParser = defaultThinkingParser
+    static var qwen3Parser = hybridParser
 }
 
 public extension LLM where Model == Qwen3MoEModel {
-    static var qwen3MoEParser: ResponseParser = defaultThinkingParser
+    static var qwen3MoEParser = hybridParser
 }
 
 public extension LLM where Model == Qwen3VL {
-    static var qwen3VLParser: ResponseParser = defaultThinkingParser
+    static var qwen3VLInstructParser = defaultParser
+    static var qwen3VLThinkingParser = defaultsToThinkingParser
 }
 
 public extension LLM where Model == GPTOSSModel {
@@ -309,31 +282,63 @@ private enum LFM2State {
 }
 
 private extension LLM {
-    static var defaultThinkingParser: ResponseParser {
+    static var hybridParser: ResponseParser {
         let isThinking = Locked(false)
         let start = Set(["<think>", "<think>\n"])
         let end = Set(["</think>", "</think>\n"])
         return ResponseParser { (generation: Generation) -> Response? in
-            switch generation {
-            case let .chunk(chunk):
-                if start.contains(chunk) {
-                    isThinking.access { $0 = true }
+            isThinking.access { isThinking -> Response? in
+                switch generation {
+                case let .chunk(chunk):
+                    if start.contains(chunk) {
+                        isThinking = true
+                        return nil
+                    } else if end.contains(chunk) {
+                        isThinking = false
+                        return nil
+                    } else if isThinking {
+                        return .reasoning(chunk)
+                    } else {
+                        return .text(chunk)
+                    }
+
+                case let .toolCall(toolCall):
+                    isThinking = false
+                    return .toolCall(toolCall)
+
+                case .info:
                     return nil
-                } else if end.contains(chunk) {
-                    isThinking.access { $0 = false }
-                    return nil
-                } else if isThinking.access({ $0 }) {
-                    return .reasoning(chunk)
-                } else {
-                    return .text(chunk)
                 }
+            }
+        }
+    }
 
-            case let .toolCall(toolCall):
-                isThinking.access { $0 = false }
-                return .toolCall(toolCall)
+    static var defaultsToThinkingParser: ResponseParser {
+        let isThinking = Locked(true)
+        let tokensToIgnore = Set(["<think>", "<think>\n"])
+        let end = Set(["</think>", "</think>\n"])
+        return ResponseParser { (generation: Generation) -> Response? in
+            isThinking.access { isThinking -> Response? in
+                switch generation {
+                case let .chunk(chunk):
+                    if tokensToIgnore.contains(chunk) {
+                        return nil
+                    } else if end.contains(chunk) {
+                        isThinking = false
+                        return nil
+                    } else if isThinking {
+                        return .reasoning(chunk)
+                    } else {
+                        return .text(chunk)
+                    }
 
-            case .info:
-                return nil
+                case let .toolCall(toolCall):
+                    isThinking = false
+                    return .toolCall(toolCall)
+
+                case .info:
+                    return nil
+                }
             }
         }
     }

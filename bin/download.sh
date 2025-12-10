@@ -38,6 +38,8 @@ ids=(
   "Qwen3-4B-4bit"
   "Qwen3-8B-4bit"
   "Qwen3-VL-2B-Instruct-4bit"
+  "Qwen3-VL-2B-Thinking-4bit"
+  "Qwen3-VL-4B-Instruct-4bit"
   "Qwen3-VL-4B-Thinking-4bit"
   "SmolLM-135M-Instruct-4bit"
 )

@@ -4,7 +4,7 @@ import MLXVLM
 import Testing
 
 @Suite(.serialized)
-struct Qwen3VL_2BTests {
+struct Qwen3VL_4B_ThinkingTests {
     @Test
     func canStreamResult() async throws {
         guard SHLLM.isSupportedDevice else {
@@ -17,13 +17,22 @@ struct Qwen3VL_2BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3VL_2B(input: input) else { return }
+        guard let llm = try qwen3VL_4B(input: input) else { return }
 
+        var reasoning = ""
         var response = ""
-        for try await token in llm.text {
-            response += token
+        for try await reply in llm {
+            switch reply {
+            case let .reasoning(text):
+                reasoning.append(text)
+            case let .text(text):
+                response.append(text)
+            case .toolCall:
+                Issue.record()
+            }
         }
 
+        Swift.print("<think>\n\(reasoning)\n</think>")
         Swift.print(response)
         #expect(!response.isEmpty)
     }
@@ -40,7 +49,7 @@ struct Qwen3VL_2BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3VL_2B(input: input) else { return }
+        guard let llm = try qwen3VL_4B(input: input) else { return }
 
         let response = try await llm.text.result
 
@@ -57,7 +66,7 @@ struct Qwen3VL_2BTests {
         }
 
         let data = try authenticationFactors
-        guard let llm = try qwen3VL_2B(image: data) else { return }
+        guard let llm = try qwen3VL_4B(image: data) else { return }
 
         var response = ""
         for try await token in llm.text {
@@ -77,7 +86,7 @@ struct Qwen3VL_2BTests {
         }
 
         let url = try authenticationFactorsURL
-        guard let llm = try qwen3VL_2B(image: url) else { return }
+        guard let llm = try qwen3VL_4B(image: url) else { return }
 
         var response = ""
         for try await token in llm.text {
@@ -89,34 +98,34 @@ struct Qwen3VL_2BTests {
     }
 }
 
-private extension Qwen3VL_2BTests {
-    func qwen3VL_2B(
+private extension Qwen3VL_4B_ThinkingTests {
+    func qwen3VL_4B(
         input: UserInput
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_2B,
+            directory: LLM.qwen3VL_4B_Thinking,
             input: input,
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLThinkingParser
         )
     }
 
-    func qwen3VL_2B(
+    func qwen3VL_4B(
         image: Data
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_2B,
+            directory: LLM.qwen3VL_4B_Thinking,
             input: imageInput(image),
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLThinkingParser
         )
     }
 
-    func qwen3VL_2B(
+    func qwen3VL_4B(
         image: URL
     ) throws -> LLM<Qwen3VL>? {
         try loadModel(
-            directory: LLM.qwen3VL_2B,
+            directory: LLM.qwen3VL_4B_Thinking,
             input: imageInput(image),
-            responseParser: LLM<Qwen3VL>.qwen3VLParser
+            responseParser: LLM<Qwen3VL>.qwen3VLThinkingParser
         )
     }
 

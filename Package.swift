@@ -73,6 +73,8 @@ let package = Package(
 //                .copy("Resources/Qwen3-4B-4bit"),
 //                .copy("Resources/Qwen3-8B-4bit"),
 //                .copy("Resources/Qwen3-VL-2B-Instruct-4bit"),
+//                .copy("Resources/Qwen3-VL-2B-Thinking-4bit"),
+//                .copy("Resources/Qwen3-VL-4B-Instruct-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Thinking-4bit"),
 //            ],
             linkerSettings: [

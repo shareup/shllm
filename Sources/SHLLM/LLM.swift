@@ -1119,7 +1119,8 @@ extension LLM where Model == Qwen3VL {
         input: UserInput,
         tools: [any ToolProtocol] = [],
         maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
+        maxOutputTokenCount: Int? = nil,
+        responseParser: ResponseParser
     ) throws -> LLM<Qwen3VL> {
         try SHLLM.assertSupportedDevice
         return .init(
@@ -1129,7 +1130,7 @@ extension LLM where Model == Qwen3VL {
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             generateParameters: generateParameters,
-            responseParser: qwen3VLParser
+            responseParser: responseParser
         )
     }
 
@@ -1163,9 +1164,23 @@ extension LLM where Model == Qwen3VL {
         )
     }
 
-    static var qwen3VL_2B: URL {
+    static var qwen3VL_2B_Instruct: URL {
         get throws {
             let dir = "Qwen3-VL-2B-Instruct-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3VL_2B_Thinking: URL {
+        get throws {
+            let dir = "Qwen3-VL-2B-Thinking-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3VL_4B_Instruct: URL {
+        get throws {
+            let dir = "Qwen3-VL-4B-Instruct-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }
