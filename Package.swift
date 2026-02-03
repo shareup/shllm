@@ -1,9 +1,9 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.12
 import PackageDescription
 
 let package = Package(
     name: "SHLLM",
-    platforms: [.iOS(.v16), .macCatalyst(.v16), .macOS(.v14)],
+    platforms: [.iOS(.v17), .macCatalyst(.v17), .macOS(.v14)],
     products: [
         .library(
             name: "SHLLM",
@@ -16,8 +16,8 @@ let package = Package(
             from: "1.1.1"
         ),
         .package(
-            url: "https://github.com/shareup/mlx-swift-examples",
-            from: "0.0.16"
+            url: "https://github.com/shareup/mlx-swift-lm",
+            branch: "main"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
@@ -33,9 +33,9 @@ let package = Package(
             name: "SHLLM",
             dependencies: [
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
-                .product(name: "MLXLLM", package: "mlx-swift-examples"),
-                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
-                .product(name: "MLXVLM", package: "mlx-swift-examples"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXVLM", package: "mlx-swift-lm"),
                 .product(name: "Synchronized", package: "synchronized"),
                 .product(
                     name: "Transformers",

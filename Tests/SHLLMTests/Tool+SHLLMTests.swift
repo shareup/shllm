@@ -605,19 +605,19 @@ private struct ArrayInput: Codable {
 }
 
 private struct TestInvalidTool: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         ["invalid": "schema"]
     }
 }
 
 private struct TestToolWithMissingFunction: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         ["type": "function"]
     }
 }
 
 private struct TestToolWithInvalidParameters: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         [
             "type": "function",
             "function": [
@@ -625,9 +625,9 @@ private struct TestToolWithInvalidParameters: ToolProtocol {
                 "description": "Test",
                 "parameters": [
                     "type": "invalid_type",
-                    "properties": [:],
-                ],
-            ],
+                    "properties": [:] as [String: any Sendable],
+                ] as [String: any Sendable],
+            ] as [String: any Sendable],
         ]
     }
 }
