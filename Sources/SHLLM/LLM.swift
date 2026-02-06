@@ -175,7 +175,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                             log: log,
                             type: .debug,
                             Date.now.timeIntervalSince(start),
-                            MLX.GPU.activeMemory / 1024 / 1024
+                            Memory.activeMemory / 1024 / 1024
                         )
                     }
 
@@ -622,12 +622,12 @@ extension LLM where Model == LFM2MoEModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            generateParameters: generateParameters,
             customConfiguration: { config in
                 var config = config
                 config.toolCallFormat = .lfm2
                 return config
-            }
+            },
+            generateParameters: generateParameters
         )
     }
 

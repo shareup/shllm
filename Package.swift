@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            .exact("0.0.1")
+            from: "0.0.1"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
