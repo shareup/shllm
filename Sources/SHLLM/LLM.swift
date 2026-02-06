@@ -623,7 +623,11 @@ extension LLM where Model == LFM2MoEModel {
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
             generateParameters: generateParameters,
-            responseParser: lfm2Parser
+            customConfiguration: { config in
+                var config = config
+                config.toolCallFormat = .lfm2
+                return config
+            }
         )
     }
 
