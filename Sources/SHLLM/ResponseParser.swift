@@ -189,63 +189,10 @@ public extension LLM where Model == GPTOSSModel {
 
 private extension LLM {
     static var hybridParser: ResponseParser {
-        let isThinking = Locked(false)
-        let start = Set(["<think>", "<think>\n"])
-        let end = Set(["</think>", "</think>\n"])
-        return ResponseParser { (generation: Generation) -> Response? in
-            isThinking.access { isThinking -> Response? in
-                switch generation {
-                case let .chunk(chunk):
-                    if start.contains(chunk) {
-                        isThinking = true
-                        return nil
-                    } else if end.contains(chunk) {
-                        isThinking = false
-                        return nil
-                    } else if isThinking {
-                        return .reasoning(chunk)
-                    } else {
-                        return .text(chunk)
-                    }
-
-                case let .toolCall(toolCall):
-                    isThinking = false
-                    return .toolCall(toolCall)
-
-                case .info:
-                    return nil
-                }
-            }
-        }
+        ThinkingTagProcessor<Model>.hybrid()
     }
 
     static var defaultsToThinkingParser: ResponseParser {
-        let isThinking = Locked(true)
-        let tokensToIgnore = Set(["<think>", "<think>\n"])
-        let end = Set(["</think>", "</think>\n"])
-        return ResponseParser { (generation: Generation) -> Response? in
-            isThinking.access { isThinking -> Response? in
-                switch generation {
-                case let .chunk(chunk):
-                    if tokensToIgnore.contains(chunk) {
-                        return nil
-                    } else if end.contains(chunk) {
-                        isThinking = false
-                        return nil
-                    } else if isThinking {
-                        return .reasoning(chunk)
-                    } else {
-                        return .text(chunk)
-                    }
-
-                case let .toolCall(toolCall):
-                    isThinking = false
-                    return .toolCall(toolCall)
-
-                case .info:
-                    return nil
-                }
-            }
-        }
+        ThinkingTagProcessor<Model>.defaultsToThinking()
     }
 }
