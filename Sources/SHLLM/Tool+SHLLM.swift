@@ -5,30 +5,33 @@ public extension ToolProtocol {
     var type: String? { schema["type"] as? String }
 
     var name: String? {
-        guard let function = schema["function"] as? [String: Any],
+        guard let function = schema["function"] as? [String: any Sendable],
               let name = function["name"] as? String
         else { return nil }
         return name
     }
 
     var description: String? {
-        guard let function = schema["function"] as? [String: Any],
+        guard let function = schema["function"] as? [String: any Sendable],
               let description = function["description"] as? String
         else { return nil }
         return description
     }
 
     var parameters: [ToolParameter]? {
-        guard let function = schema["function"] as? [String: Any],
-              let schemaParameters = function["parameters"] as? [String: Any],
+        guard let function = schema["function"] as? [String: any Sendable],
+              let schemaParameters = function["parameters"] as? [String: any Sendable],
               schemaParameters["type"] as? String == "object",
-              let properties = schemaParameters["properties"] as? [String: [String: Any]]
+              let properties = schemaParameters["properties"] as? [String: any Sendable]
         else { return nil }
 
         let requiredParams = Set(schemaParameters["required"] as? [String] ?? [])
 
         var resultParameters = [ToolParameter]()
         for (name, paramSchema) in properties {
+            guard let paramSchema = paramSchema as? [String: any Sendable] else {
+                return nil
+            }
             guard let toolParam = Self.parseParameter(
                 name: name,
                 schema: paramSchema,
@@ -79,7 +82,7 @@ extension ToolParameter: @retroactive Equatable {
 private extension ToolProtocol {
     static func parseParameter(
         name: String,
-        schema: [String: Any],
+        schema: [String: any Sendable],
         isRequired: Bool
     ) -> ToolParameter? {
         guard let description = schema["description"] as? String,
@@ -116,7 +119,7 @@ private extension ToolProtocol {
         }
     }
 
-    static func parseType(from schema: [String: Any]) -> ToolParameterType? {
+    static func parseType(from schema: [String: any Sendable]) -> ToolParameterType? {
         guard let typeString = schema["type"] as? String else {
             return nil
         }
@@ -138,7 +141,7 @@ private extension ToolProtocol {
             return .double
 
         case "array":
-            guard let itemsSchema = schema["items"] as? [String: Any],
+            guard let itemsSchema = schema["items"] as? [String: any Sendable],
                   let elementType = parseType(from: itemsSchema)
             else {
                 return nil
@@ -146,8 +149,7 @@ private extension ToolProtocol {
             return .array(elementType: elementType)
 
         case "object":
-            typealias Props = [String: [String: Any]]
-            guard let properties = schema["properties"] as? Props else {
+            guard let properties = schema["properties"] as? [String: any Sendable] else {
                 return nil
             }
             let requiredNames = schema["required"] as? [String] ?? []
@@ -155,6 +157,9 @@ private extension ToolProtocol {
             var subParameters = [ToolParameter]()
 
             for (name, propSchema) in properties {
+                guard let propSchema = propSchema as? [String: any Sendable] else {
+                    return nil
+                }
                 guard let subParam = parseParameter(
                     name: name,
                     schema: propSchema,

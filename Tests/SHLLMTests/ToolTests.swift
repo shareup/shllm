@@ -139,28 +139,29 @@ struct ToolTests {
         #expect(tool.name == "complex_search")
         #expect(tool.description == "Perform a complex search with filters and pagination")
 
-        let schema = tool.schema as NSDictionary
-        let function = try #require(schema["function"] as? [String: Any])
-        let parameters = try #require(function["parameters"] as? [String: Any])
-        let properties = try #require(parameters["properties"] as? [String: Any])
+        let schema = tool.schema
+        let function = try #require(schema["function"] as? [String: any Sendable])
+        let parameters = try #require(function["parameters"] as? [String: any Sendable])
+        let properties = try #require(parameters["properties"] as? [String: any Sendable])
 
-        let queryProp = try #require(properties["query"] as? [String: Any])
+        let queryProp = try #require(properties["query"] as? [String: any Sendable])
         #expect(queryProp["type"] as? String == "string")
         #expect(queryProp["description"] as? String == "Search query")
 
-        let filtersProp = try #require(properties["filters"] as? [String: Any])
+        let filtersProp = try #require(properties["filters"] as? [String: any Sendable])
         #expect(filtersProp["type"] as? String == "array")
-        let filtersItems = try #require(filtersProp["items"] as? [String: Any])
+        let filtersItems = try #require(filtersProp["items"] as? [String: any Sendable])
         #expect(filtersItems["type"] as? String == "string")
 
-        let paginationProp = try #require(properties["pagination"] as? [String: Any])
+        let paginationProp = try #require(properties["pagination"] as? [String: any Sendable])
         #expect(paginationProp["type"] as? String == "object")
-        let paginationProps = try #require(paginationProp["properties"] as? [String: Any])
+        let paginationProps =
+            try #require(paginationProp["properties"] as? [String: any Sendable])
 
-        let pageProp = try #require(paginationProps["page"] as? [String: Any])
+        let pageProp = try #require(paginationProps["page"] as? [String: any Sendable])
         #expect(pageProp["type"] as? String == "integer")
 
-        let limitProp = try #require(paginationProps["limit"] as? [String: Any])
+        let limitProp = try #require(paginationProps["limit"] as? [String: any Sendable])
         #expect(limitProp["type"] as? String == "integer")
 
         let required = try #require(parameters["required"] as? [String])
