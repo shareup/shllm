@@ -1,6 +1,5 @@
 import Foundation
 import class MLXLLM.GPTOSSModel
-import class MLXLLM.LFM2MoEModel
 import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
@@ -188,158 +187,12 @@ public extension LLM where Model == GPTOSSModel {
     }
 }
 
-public extension LLM where Model == LFM2MoEModel {
-    /// Parser for LFM2 which emits tool calls as a Python-style list of
-    /// function invocations between special tokens:
-    ///   <|tool_call_start|> [func(arg="value"), ...] <|tool_call_end|>
-    /// This parser accumulates tokens between the start/end markers,
-    /// parses one or more calls, and yields them as `Response.toolCall`.
-    ///
-    /// # Example Conversation with Tool Call
-    ///
-    /// ```
-    /// <|startoftext|><|im_start|>system
-    /// List of tools: <|tool_list_start|>[{"name": "get_candidate_status", "description":
-    /// "Retrieves the current status of a candidate in the recruitment process", "parameters":
-    /// {"type": "object", "properties": {"candidate_id": {"type": "string", "description":
-    /// "Unique identifier for the candidate"}}, "required":
-    /// ["candidate_id"]}}]<|tool_list_end|><|im_end|>
-    /// <|im_start|>user
-    /// What is the current status of candidate ID 12345?<|im_end|>
-    /// <|im_start|>assistant
-    /// <|tool_call_start|>[get_candidate_status(candidate_id="12345")]<|tool_call_end|>Checking
-    /// the current status of candidate ID 12345.<|im_end|>
-    /// <|im_start|>tool
-    /// <|tool_response_start|>{"candidate_id": "12345", "status": "Interview Scheduled",
-    /// "position": "Clinical Research Associate", "date":
-    /// "2023-11-20"}<|tool_response_end|><|im_end|>
-    /// <|im_start|>assistant
-    /// The candidate with ID 12345 is currently in the "Interview Scheduled" stage for the
-    /// position of Clinical Research Associate, with an interview date set for
-    /// 2023-11-20.<|im_end|>
-    /// ```
-    ///
-    static var lfm2Parser: ResponseParser {
-        let state = Locked(LFM2State.streaming)
-        return ResponseParser { (generation: Generation) -> Response? in
-            state.access { $0.process(generation) }
-        }
-    }
-}
-
-private enum LFM2State {
-    case parsingToolCall(String)
-    case streaming
-
-    mutating func process(_ generation: Generation) -> Response? {
-        let startToken = "<|tool_call_start|>"
-        let endToken = "<|tool_call_end|>"
-
-        switch (self, generation) {
-        case (.streaming, .chunk(startToken)):
-            self = .parsingToolCall("")
-            return nil
-
-        case (.parsingToolCall(var buffer), .chunk(endToken)):
-            if let call = Python.parseFunctionCall(&buffer) {
-                self = .parsingToolCall(buffer)
-                return .toolCall(call)
-            } else {
-                self = .streaming
-                return nil
-            }
-
-        case (.parsingToolCall(var buffer), let .chunk(token)):
-            buffer += token
-            if let call = Python.parseFunctionCall(&buffer) {
-                self = .parsingToolCall(buffer)
-                return .toolCall(call)
-            } else {
-                self = .parsingToolCall(buffer)
-                return nil
-            }
-
-        case let (.streaming, .chunk(token)):
-            return .text(token)
-
-        case var (.parsingToolCall(buffer), .info):
-            assert(buffer.isEmpty)
-            if let call = Python.parseFunctionCall(&buffer) {
-                self = .parsingToolCall(buffer)
-                return .toolCall(call)
-            } else {
-                self = .streaming
-                return nil
-            }
-
-        case (_, .info):
-            return nil
-
-        case let (_, .toolCall(call)):
-            return .toolCall(call)
-        }
-    }
-}
-
 private extension LLM {
     static var hybridParser: ResponseParser {
-        let isThinking = Locked(false)
-        let start = Set(["<think>", "<think>\n"])
-        let end = Set(["</think>", "</think>\n"])
-        return ResponseParser { (generation: Generation) -> Response? in
-            isThinking.access { isThinking -> Response? in
-                switch generation {
-                case let .chunk(chunk):
-                    if start.contains(chunk) {
-                        isThinking = true
-                        return nil
-                    } else if end.contains(chunk) {
-                        isThinking = false
-                        return nil
-                    } else if isThinking {
-                        return .reasoning(chunk)
-                    } else {
-                        return .text(chunk)
-                    }
-
-                case let .toolCall(toolCall):
-                    isThinking = false
-                    return .toolCall(toolCall)
-
-                case .info:
-                    return nil
-                }
-            }
-        }
+        ThinkingTagProcessor<Model>.hybrid()
     }
 
     static var defaultsToThinkingParser: ResponseParser {
-        let isThinking = Locked(true)
-        let tokensToIgnore = Set(["<think>", "<think>\n"])
-        let end = Set(["</think>", "</think>\n"])
-        return ResponseParser { (generation: Generation) -> Response? in
-            isThinking.access { isThinking -> Response? in
-                switch generation {
-                case let .chunk(chunk):
-                    if tokensToIgnore.contains(chunk) {
-                        return nil
-                    } else if end.contains(chunk) {
-                        isThinking = false
-                        return nil
-                    } else if isThinking {
-                        return .reasoning(chunk)
-                    } else {
-                        return .text(chunk)
-                    }
-
-                case let .toolCall(toolCall):
-                    isThinking = false
-                    return .toolCall(toolCall)
-
-                case .info:
-                    return nil
-                }
-            }
-        }
+        ThinkingTagProcessor<Model>.defaultsToThinking()
     }
 }

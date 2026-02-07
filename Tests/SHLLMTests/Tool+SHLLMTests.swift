@@ -439,6 +439,29 @@ struct ToolSHLLMTests {
     }
 
     @Test
+    func schemaWithSendableDictionaries() throws {
+        let tool = TestToolWithSendableSchema()
+
+        #expect(tool.type == "function")
+        #expect(tool.name == "manual_tool")
+        #expect(tool.description == "Manually defined schema")
+
+        let parameters = try #require(tool.parameters)
+        #expect(parameters.count == 2)
+
+        let queryParam = parameters.first { $0.name == "query" }
+        let limitParam = parameters.first { $0.name == "limit" }
+
+        #expect(queryParam?.isRequired == true)
+        #expect(queryParam?.type == .string)
+        #expect(queryParam?.description == "Search query")
+
+        #expect(limitParam?.isRequired == false)
+        #expect(limitParam?.type == .int)
+        #expect(limitParam?.description == "Result limit")
+    }
+
+    @Test
     func nestedObjectParsing() throws {
         let tool = Tool<NestedInput, EmptyOutput>(
             name: "nested_tool",
@@ -605,19 +628,19 @@ private struct ArrayInput: Codable {
 }
 
 private struct TestInvalidTool: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         ["invalid": "schema"]
     }
 }
 
 private struct TestToolWithMissingFunction: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         ["type": "function"]
     }
 }
 
 private struct TestToolWithInvalidParameters: ToolProtocol {
-    var schema: [String: Any] {
+    var schema: ToolSpec {
         [
             "type": "function",
             "function": [
@@ -625,9 +648,35 @@ private struct TestToolWithInvalidParameters: ToolProtocol {
                 "description": "Test",
                 "parameters": [
                     "type": "invalid_type",
-                    "properties": [:],
-                ],
-            ],
+                    "properties": [:] as [String: any Sendable],
+                ] as [String: any Sendable],
+            ] as [String: any Sendable],
+        ]
+    }
+}
+
+private struct TestToolWithSendableSchema: ToolProtocol {
+    var schema: ToolSpec {
+        [
+            "type": "function",
+            "function": [
+                "name": "manual_tool",
+                "description": "Manually defined schema",
+                "parameters": [
+                    "type": "object",
+                    "properties": [
+                        "query": [
+                            "type": "string",
+                            "description": "Search query",
+                        ] as [String: any Sendable],
+                        "limit": [
+                            "type": "integer",
+                            "description": "Result limit",
+                        ] as [String: any Sendable],
+                    ] as [String: any Sendable],
+                    "required": ["query"],
+                ] as [String: any Sendable],
+            ] as [String: any Sendable],
         ]
     }
 }

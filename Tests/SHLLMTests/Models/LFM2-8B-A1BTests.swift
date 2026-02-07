@@ -270,6 +270,10 @@ private func lfm2_8B_A1B(
         directory: LLM<LFM2MoEModel>.lfm2_8B_A1B,
         input: input,
         tools: tools,
-        responseParser: LLM<LFM2MoEModel>.lfm2Parser
+        customConfiguration: { config in
+            var config = config
+            config.toolCallFormat = .lfm2
+            return config
+        }
     )
 }

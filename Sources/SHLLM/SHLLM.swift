@@ -17,16 +17,12 @@ public enum SHLLM {
 
     public static func clearCache() {
         ModelCache.clear()
-        MLX.GPU.clearCache()
+        Memory.clearCache()
     }
 
     public static var cacheLimit: Int {
-        get {
-            MLX.GPU.cacheLimit
-        }
-        set {
-            MLX.GPU.set(cacheLimit: newValue)
-        }
+        get { Memory.cacheLimit }
+        set { Memory.cacheLimit = newValue }
     }
 
     public static var recommendedMaxWorkingSetSize: Int {

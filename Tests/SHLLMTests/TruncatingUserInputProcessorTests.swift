@@ -527,12 +527,25 @@ private final class NaiveTokenizer: Tokenizer {
         String(id)
     }
 
+    func callAsFunction(_ text: String, addSpecialTokens: Bool) -> [Int] {
+        encode(text: text, addSpecialTokens: addSpecialTokens)
+    }
+
+    func convertTokensToIds(_ tokens: [String]) -> [Int?] {
+        tokens.map { convertTokenToId($0) }
+    }
+
+    func convertIdsToTokens(_ ids: [Int]) -> [String?] {
+        ids.map { convertIdToToken($0) }
+    }
+
     var bosToken: String? { nil }
     var bosTokenId: Int? { nil }
     var eosToken: String? { nil }
     var eosTokenId: Int? { nil }
     var unknownToken: String? { nil }
     var unknownTokenId: Int? { nil }
+    var hasChatTemplate: Bool { true }
 
     func applyChatTemplate(messages: [Tokenizers.Message]) throws -> [Int] {
         let combined = messages
@@ -551,7 +564,7 @@ private final class NaiveTokenizer: Tokenizer {
     func applyChatTemplate(
         messages: [Tokenizers.Message],
         tools _: [Tokenizers.ToolSpec]?,
-        additionalContext _: [String: Any]?
+        additionalContext _: [String: any Sendable]?
     ) throws -> [Int] {
         try applyChatTemplate(messages: messages)
     }
@@ -588,7 +601,7 @@ private final class NaiveTokenizer: Tokenizer {
         truncation _: Bool,
         maxLength _: Int?,
         tools _: [Tokenizers.ToolSpec]?,
-        additionalContext _: [String: Any]?
+        additionalContext _: [String: any Sendable]?
     ) throws -> [Int] {
         try applyChatTemplate(messages: messages)
     }
