@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.4"
+            from: "0.0.5"
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers",
@@ -44,7 +44,7 @@ let package = Package(
                 ),
             ],
 //            resources: [
-//                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
+            //                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
 //                .copy("Resources/gemma-2-2b-it-4bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-3bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-4bit"),
@@ -58,8 +58,11 @@ let package = Package(
 //                .copy("Resources/LFM2-8B-A1B-4bit"),
 //                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
 //                .copy("Resources/Llama-3.2-3B-Instruct-4bit"),
+//                .copy("Resources/  mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-4Bit"),
+//                .copy("Resources/  mistralai_Ministral-3-14B-Instruct-2512-MLX-MXFP4"),
 //                .copy("Resources/Mistral-7B-Instruct-v0.3-4bit"),
 //                .copy("Resources/Mistral-Nemo-Instruct-2407-4bit"),
+//                .copy("Resources/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit"),
 //                .copy("Resources/OpenELM-270M-Instruct"),
 //                .copy("Resources/Phi-3.5-mini-instruct-4bit"),
 //                .copy("Resources/Phi-3.5-MoE-instruct-4bit"),

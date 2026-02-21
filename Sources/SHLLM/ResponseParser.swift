@@ -1,9 +1,11 @@
 import Foundation
 import class MLXLLM.GPTOSSModel
+import class MLXLLM.NemotronHModel
 import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
+import struct MLXLMCommon.ToolCall
 import class MLXVLM.Qwen3VL
 import Synchronized
 
@@ -45,6 +47,139 @@ public extension LLM where Model == Qwen3MoEModel {
 public extension LLM where Model == Qwen3VL {
     static var qwen3VLInstructParser = defaultParser
     static var qwen3VLThinkingParser = defaultsToThinkingParser
+}
+
+public extension LLM where Model == NemotronHModel {
+    static var nemotronParser: ResponseParser {
+        let state = Locked(NemotronParserState())
+        return ResponseParser { (generation: Generation) -> Response? in
+            state.access { state in
+                state.process(generation)
+            }
+        }
+    }
+}
+
+private struct NemotronParserState {
+    private let thinkStartTags: Set<String> = ["<think>", "<think>\n"]
+    private let thinkEndTags: Set<String> = ["</think>", "</think>\n"]
+    private let toolCallStartTag = "<tool_call>"
+    private let toolCallEndTag = "</tool_call>"
+
+    private var isThinking = true
+    private var isBufferingToolCall = false
+    private var textBuffer = ""
+
+    mutating func process(_ generation: Generation) -> Response? {
+        switch generation {
+        case let .chunk(chunk):
+            return processChunk(chunk)
+        case let .toolCall(toolCall):
+            isThinking = false
+            isBufferingToolCall = false
+            textBuffer = ""
+            return .toolCall(toolCall)
+        case .info:
+            return finalize()
+        }
+    }
+
+    private mutating func processChunk(_ chunk: String) -> Response? {
+        if thinkStartTags.contains(chunk) {
+            isThinking = true
+            return nil
+        }
+
+        if thinkEndTags.contains(chunk) {
+            isThinking = false
+            return nil
+        }
+
+        if isThinking {
+            return .reasoning(chunk)
+        }
+
+        textBuffer.append(chunk)
+
+        if isBufferingToolCall {
+            if textBuffer.contains(toolCallEndTag) {
+                let result = parseToolCall()
+                textBuffer = ""
+                isBufferingToolCall = false
+                return result
+            }
+            return nil
+        }
+
+        if textBuffer.contains(toolCallStartTag) {
+            isBufferingToolCall = true
+            return nil
+        }
+
+        let trimmed = textBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty, toolCallStartTag.hasPrefix(trimmed) {
+            return nil
+        }
+
+        let text = textBuffer
+        textBuffer = ""
+        return .text(text)
+    }
+
+    private mutating func finalize() -> Response? {
+        guard !textBuffer.isEmpty else { return nil }
+
+        if let result = parseToolCall() {
+            textBuffer = ""
+            return result
+        }
+
+        let text = textBuffer
+        textBuffer = ""
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? nil : .text(text)
+    }
+
+    private func parseToolCall() -> Response? {
+        guard let funcStart = textBuffer.range(of: "<function="),
+              let funcNameEnd = textBuffer.range(
+                  of: ">",
+                  range: funcStart.upperBound ..< textBuffer.endIndex
+              ),
+              let funcEnd = textBuffer.range(of: "</function>")
+        else { return nil }
+
+        let funcName = String(textBuffer[funcStart.upperBound ..< funcNameEnd.lowerBound])
+        let paramSection = String(textBuffer[funcNameEnd.upperBound ..< funcEnd.lowerBound])
+
+        var arguments: [String: any Sendable] = [:]
+        var searchRange = paramSection.startIndex ..< paramSection.endIndex
+
+        while let paramStart = paramSection.range(
+            of: "<parameter=", range: searchRange
+        ) {
+            guard let nameEnd = paramSection.range(
+                of: ">", range: paramStart.upperBound ..< paramSection.endIndex
+            ) else { break }
+
+            let paramName = String(paramSection[paramStart.upperBound ..< nameEnd.lowerBound])
+
+            guard let paramEnd = paramSection.range(
+                of: "</parameter>", range: nameEnd.upperBound ..< paramSection.endIndex
+            ) else { break }
+
+            var value = String(paramSection[nameEnd.upperBound ..< paramEnd.lowerBound])
+            if value.hasPrefix("\n") { value = String(value.dropFirst()) }
+            if value.hasSuffix("\n") { value = String(value.dropLast()) }
+
+            arguments[paramName] = value
+            searchRange = paramEnd.upperBound ..< paramSection.endIndex
+        }
+
+        return .toolCall(ToolCall(
+            function: .init(name: funcName, arguments: arguments)
+        ))
+    }
 }
 
 public extension LLM where Model == GPTOSSModel {

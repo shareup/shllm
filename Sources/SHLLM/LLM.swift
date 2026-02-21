@@ -759,6 +759,48 @@ extension LLM where Model == LlamaModel {
     }
 }
 
+// MARK: - Nemotron
+
+extension LLM where Model == NemotronHModel {
+    public static func nemotron3Nano(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<NemotronHModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.toolCallFormat = .xmlFunction
+                return config
+            },
+            generateParameters: generateParameters,
+            responseParser: nemotronParser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.6,
+            topP: 0.95
+        )
+    }
+
+    static var nemotron3Nano_30B_A3B: URL {
+        get throws {
+            let dir = "NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
 // MARK: - OpenELM
 
 extension LLM where Model == OpenELMModel {
