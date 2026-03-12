@@ -414,6 +414,68 @@ extension LLM where Model == Qwen2Model {
     }
 }
 
+// MARK: - Mistral 3
+
+extension LLM where Model == Mistral3VLM {
+    public static func devstral2(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Mistral3VLM> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: mistral3Parser
+        )
+    }
+
+    public static func ministral(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Mistral3VLM> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: mistral3Parser
+        )
+    }
+
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 0.15
+        )
+    }
+
+    static var devstral2Small_24B: URL {
+        get throws {
+            let dir = "Devstral-Small-2-24B-Instruct-2512-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var ministral_3_14B: URL {
+        get throws {
+            let dir = "Ministral-3-14B-Instruct-2512-6bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
 // MARK: - Gemma
 
 extension LLM where Model == GemmaModel {
@@ -776,11 +838,6 @@ extension LLM where Model == NemotronHModel {
             tools: tools,
             maxInputTokenCount: maxInputTokenCount,
             maxOutputTokenCount: maxOutputTokenCount,
-            customConfiguration: { config in
-                var config = config
-                config.toolCallFormat = .xmlFunction
-                return config
-            },
             generateParameters: generateParameters,
             responseParser: nemotronParser
         )
@@ -795,7 +852,7 @@ extension LLM where Model == NemotronHModel {
 
     static var nemotron3Nano_30B_A3B: URL {
         get throws {
-            let dir = "NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit"
+            let dir = "NVIDIA-Nemotron-3-Nano-30B-A3B-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

@@ -45,7 +45,7 @@ func imageInput(
 ) -> UserInput {
     UserInput(chat: [
         .system(
-            "You are an image understanding model capable of describing the salient features of any image."
+            "You are an image-understanding model capable of describing the salient features of any image."
         ),
         .user(message, images: [.ciImage(.init(data: image)!)]),
     ])
@@ -57,7 +57,7 @@ func imageInput(
 ) -> UserInput {
     UserInput(chat: [
         .system(
-            "You are an image understanding model capable of describing the salient features of any image."
+            "You are an image-understanding model capable of describing the salient features of any image."
         ),
         .user(message, images: [.url(image)]),
     ])

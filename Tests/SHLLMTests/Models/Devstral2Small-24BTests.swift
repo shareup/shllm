@@ -1,11 +1,11 @@
 import Foundation
-import MLXLLM
 import MLXLMCommon
+import MLXVLM
 @testable import SHLLM
 import Testing
 
 @Suite(.serialized)
-struct NemotronNano_30BTests {
+struct Devstral2Small_24BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct NemotronNano_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try nemotronNano(input) else { return }
+        guard let llm = try devstral2(input) else { return }
 
         var reasoning = ""
         var result = ""
@@ -28,8 +28,9 @@ struct NemotronNano_30BTests {
             }
         }
 
-        Swift.print("<think>\n\(reasoning)\n</think>")
-        #expect(!reasoning.isEmpty)
+        if !reasoning.isEmpty {
+            Swift.print("[THINK]\n\(reasoning)\n[/THINK]")
+        }
 
         Swift.print(result)
         #expect(!result.isEmpty)
@@ -42,7 +43,7 @@ struct NemotronNano_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try nemotronNano(input) else { return }
+        guard let llm = try devstral2(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -60,13 +61,9 @@ struct NemotronNano_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try nemotronNano(input) else { return }
+        guard let llm = try devstral2(input) else { return }
 
-        let (_reasoning, _text, toolCalls) = try await llm.result
-
-        let reasoning = try #require(_reasoning)
-        Swift.print("<think>\n\(reasoning)\n</think>")
-        #expect(!reasoning.isEmpty)
+        let (_, _text, toolCalls) = try await llm.result
 
         let text = try #require(_text)
         Swift.print(text)
@@ -82,7 +79,7 @@ struct NemotronNano_30BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try nemotronNano(input) else { return }
+        guard let llm = try devstral2(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -98,7 +95,7 @@ struct NemotronNano_30BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try nemotronNano(
+        guard let llm = try devstral2(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -124,7 +121,6 @@ struct NemotronNano_30BTests {
             }
         }
 
-        #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
@@ -139,7 +135,7 @@ struct NemotronNano_30BTests {
             .user("Get the latest news about Apple, sorted by popularity."),
         ])
 
-        guard let llm = try nemotronNano(
+        guard let llm = try devstral2(
             input,
             tools: [weatherTool, stockTool, newsTool]
         ) else { return }
@@ -169,7 +165,6 @@ struct NemotronNano_30BTests {
             }
         }
 
-        #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount >= 1)
         #expect(newsQueryFound)
@@ -187,22 +182,21 @@ struct NemotronNano_30BTests {
 
         var input = UserInput(chat: chat)
 
-        guard let llm1 = try nemotronNano(
+        guard let llm1 = try devstral2(
             input,
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning, text, toolCallsOpt) = try await llm1.result
+        let (_, text, toolCallsOpt) = try await llm1.result
         let toolCall = try #require(toolCallsOpt?.first)
 
-        #expect(reasoning != nil)
         #expect(text == nil)
         #expect(toolCall.function.name == "get_stock_price")
         #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
         input.appendToolResult(["price": 123.45])
 
-        guard let llm2 = try nemotronNano(
+        guard let llm2 = try devstral2(
             input,
             tools: [stockTool]
         ) else { return }
@@ -233,9 +227,8 @@ struct NemotronNano_30BTests {
             ),
         ]
 
-        // web_search
         var input = UserInput(chat: chat)
-        guard let llm = try nemotronNano(input, tools: [
+        guard let llm = try devstral2(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -250,8 +243,7 @@ struct NemotronNano_30BTests {
             ]],
         ])
 
-        // fetch_web_page
-        guard let llm2 = try nemotronNano(input, tools: [
+        guard let llm2 = try devstral2(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
@@ -262,8 +254,7 @@ struct NemotronNano_30BTests {
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
 
-        // find_email_in_contacts
-        guard let llm3 = try nemotronNano(input, tools: [
+        guard let llm3 = try devstral2(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
@@ -275,8 +266,7 @@ struct NemotronNano_30BTests {
             "email": "alex@example.com",
         ])
 
-        // send_email
-        guard let llm4 = try nemotronNano(input, tools: [
+        guard let llm4 = try devstral2(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (reasoning, text, toolCalls4) = try await llm4.result
@@ -300,8 +290,7 @@ struct NemotronNano_30BTests {
 
         input.appendToolResult(["status": "sent"])
 
-        // assistant response
-        guard let llm5 = try nemotronNano(input, tools: [
+        guard let llm5 = try devstral2(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -311,16 +300,94 @@ struct NemotronNano_30BTests {
         #expect(response.contains(oneOf: ["sent", "emailed"]))
         #expect(response.lowercased().contains("alex"))
     }
+
+    @Test()
+    @MainActor
+    func canExtractTextFromImageData() async throws {
+        let data = try authenticationFactors
+        guard let llm = try devstral2(image: data) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        let strings = [
+            "authentication",
+            "Something you forgot",
+            "Something you left in the taxi",
+            "Something that can be chopped off",
+        ]
+        #expect(response.contains(oneOf: strings))
+    }
+
+    @Test()
+    @MainActor
+    func canExtractTextFromImageURL() async throws {
+        let url = try authenticationFactorsURL
+        guard let llm = try devstral2(image: url) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        #expect(response.contains("authentication"))
+    }
 }
 
-private func nemotronNano(
+private func devstral2(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
-) throws -> LLM<NemotronHModel>? {
+) throws -> LLM<Mistral3VLM>? {
     try loadModel(
-        directory: LLM<NemotronHModel>.nemotron3Nano_30B_A3B,
+        directory: LLM<Mistral3VLM>.devstral2Small_24B,
         input: input,
         tools: tools,
-        responseParser: LLM<NemotronHModel>.nemotronParser
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
     )
+}
+
+private func devstral2(
+    image: Data
+) throws -> LLM<Mistral3VLM>? {
+    try loadModel(
+        directory: LLM<Mistral3VLM>.devstral2Small_24B,
+        input: imageInput(image),
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
+    )
+}
+
+private func devstral2(
+    image: URL
+) throws -> LLM<Mistral3VLM>? {
+    try loadModel(
+        directory: LLM<Mistral3VLM>.devstral2Small_24B,
+        input: imageInput(image),
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
+    )
+}
+
+private var authenticationFactorsURL: URL {
+    get throws {
+        guard let url = Bundle.module.url(
+            forResource: "3-authentication-factors",
+            withExtension: "png"
+        ) else {
+            throw NSError(
+                domain: NSURLErrorDomain,
+                code: NSURLErrorFileDoesNotExist,
+                userInfo: nil
+            )
+        }
+        return url
+    }
+}
+
+private var authenticationFactors: Data {
+    get throws {
+        try Data(contentsOf: authenticationFactorsURL)
+    }
 }
