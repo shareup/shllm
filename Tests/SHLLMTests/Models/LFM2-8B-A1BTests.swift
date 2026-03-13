@@ -149,6 +149,7 @@ struct LFM2_8B_A1BTests {
         #expect(toolCall.function.name == "get_stock_price")
         #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
+        input.appendAssistantToolCall(toolCall)
         input.appendToolResult(["price": 123.45])
         guard let llm2 = try lfm2_8B_A1B(
             input,
@@ -162,9 +163,7 @@ struct LFM2_8B_A1BTests {
         #expect(result.contains("123.45"))
     }
 
-    // NOTE: This test is disabled because LFM2-8B-A1B can't seem to handle
-    //       multi-step tool workflows.
-    @Test(.disabled())
+    @Test()
     func canCompleteMultiToolWorkflowAndEmail() async throws {
         let chat: [Chat.Message] = [
             .system("""
@@ -197,6 +196,7 @@ struct LFM2_8B_A1BTests {
             .first { $0.function.name == "web_search" })
         #expect(toolCall1.function.name == "web_search")
 
+        input.appendAssistantToolCall(toolCall1)
         input.appendToolResult([
             "results": [[
                 "title": "ACME Conference 2025 Keynote",
@@ -213,6 +213,7 @@ struct LFM2_8B_A1BTests {
             .first { $0.function.name == "fetch_web_page" })
         #expect(toolCall2.function.name == "fetch_web_page")
 
+        input.appendAssistantToolCall(toolCall2)
         input.appendToolResult([
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
@@ -226,6 +227,7 @@ struct LFM2_8B_A1BTests {
             .first { $0.function.name == "find_email_in_contacts" })
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
+        input.appendAssistantToolCall(toolCall3)
         input.appendToolResult([
             "email": "alex@example.com",
         ])
@@ -245,6 +247,7 @@ struct LFM2_8B_A1BTests {
         #expect((subjectArg.anyValue as? String)?.isEmpty == false)
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
+        input.appendAssistantToolCall(toolCall4)
         input.appendToolResult([
             "status": "sent",
         ])

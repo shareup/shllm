@@ -200,6 +200,7 @@ struct NemotronNano_30BTests {
         #expect(toolCall.function.name == "get_stock_price")
         #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
+        input.appendAssistantToolCall(toolCall)
         input.appendToolResult(["price": 123.45])
 
         guard let llm2 = try nemotronNano(
@@ -243,6 +244,7 @@ struct NemotronNano_30BTests {
         let toolCall1 = try #require(toolCallsOutput1?.first)
         #expect(toolCall1.function.name == "web_search")
 
+        input.appendAssistantToolCall(toolCall1)
         input.appendToolResult([
             "results": [[
                 "title": "ACME Conference 2025 Keynote",
@@ -258,6 +260,7 @@ struct NemotronNano_30BTests {
         let toolCall2 = try #require(toolCallsOutput2?.first)
         #expect(toolCall2.function.name == "fetch_web_page")
 
+        input.appendAssistantToolCall(toolCall2)
         input.appendToolResult([
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
@@ -271,6 +274,7 @@ struct NemotronNano_30BTests {
         let toolCall3 = try #require(toolCallsOutput3?.first)
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
+        input.appendAssistantToolCall(toolCall3)
         input.appendToolResult([
             "email": "alex@example.com",
         ])
@@ -298,6 +302,7 @@ struct NemotronNano_30BTests {
         #expect((subjectArg.anyValue as? String)?.isEmpty == false)
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
+        input.appendAssistantToolCall(toolCall4)
         input.appendToolResult(["status": "sent"])
 
         // assistant response
