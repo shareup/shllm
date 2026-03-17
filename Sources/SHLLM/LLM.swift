@@ -1295,3 +1295,117 @@ extension LLM where Model == Qwen3VL {
         }
     }
 }
+
+// MARK: - Qwen3.5
+
+extension LLM where Model == Qwen35 {
+    public static func qwen3_5(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen35> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3_5Parser(for: input)
+        )
+    }
+
+    // https://huggingface.co/Qwen/Qwen3.5-35B-A3B#using-qwen35-via-the-chat-completions-api
+    //
+    // # Thinking mode for general tasks
+    //
+    // - temperature=1.0
+    // - top_p=0.95
+    // - top_k=20
+    // - min_p=0.0
+    // - presence_penalty=1.5
+    // - repetition_penalty=1.0
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 32_768,
+            temperature: 1.0,
+            topP: 0.95,
+            presencePenalty: 1.5
+        )
+    }
+
+    // NOTE: Qwen3.5-2B operates in non-thinking mode by default.
+    //       https://huggingface.co/Qwen/Qwen3.5-2B#quickstart
+    static var qwen3_5__2B: URL {
+        get throws {
+            let dir = "Qwen3.5-2B-6bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3_5__9B: URL {
+        get throws {
+            let dir = "Qwen3.5-9B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var qwen3_5__27B: URL {
+        get throws {
+            let dir = "Qwen3.5-27B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Qwen3.5 MoE
+
+extension LLM where Model == Qwen35MoE {
+    public static func qwen3_5MoE(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Qwen35MoE> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            generateParameters: generateParameters,
+            responseParser: qwen3_5MoEParser(for: input)
+        )
+    }
+
+    // https://huggingface.co/Qwen/Qwen3.5-35B-A3B#using-qwen35-via-the-chat-completions-api
+    //
+    // # Thinking mode for general tasks
+    //
+    // - temperature=1.0
+    // - top_p=0.95
+    // - top_k=20
+    // - min_p=0.0
+    // - presence_penalty=1.5
+    // - repetition_penalty=1.0
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            maxTokens: 32_768,
+            temperature: 1.0,
+            topP: 0.95,
+            presencePenalty: 1.5
+        )
+    }
+
+    static var qwen3_5MoE__35B_A3B: URL {
+        get throws {
+            let dir = "Qwen3.5-35B-A3B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}

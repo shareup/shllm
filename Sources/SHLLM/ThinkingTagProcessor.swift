@@ -3,6 +3,11 @@ import MLXLMCommon
 import Synchronized
 
 enum ThinkingTagProcessor<Model: LanguageModel> {
+    /// Creates a `LLM.ResponseParser` that processes thinking tags
+    /// in the model's output. It assumes the model will output
+    /// start and end tags to delimit reasoning blocks. This means
+    /// the parser assumes arriving tokens are non-reasoning tokens
+    /// unless they are between start and end tags.
     static func hybrid(
         startTags: Set<String> = ["<think>", "<think>\n"],
         endTags: Set<String> = ["</think>", "</think>\n"]
@@ -14,6 +19,10 @@ enum ThinkingTagProcessor<Model: LanguageModel> {
         )
     }
 
+    /// Creates a `LLM.ResponseParser` that processes thinking tags
+    /// in the model's output. It assumes the model starts in
+    /// "thinking" mode, meaning arriving tokens are assumed to
+    /// be reasoning tokens until an end tag is seen.
     static func defaultsToThinking(
         startTags: Set<String> = ["<think>", "<think>\n"],
         endTags: Set<String> = ["</think>", "</think>\n"]

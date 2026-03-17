@@ -21,9 +21,16 @@ public extension UserInput {
     /// Append a generic tool-result message suitable for most models.
     mutating func appendToolResult(_ object: [String: Any]) {
         ensureMessagesForm()
+        let content: String = {
+            guard let data = try? JSONSerialization.data(
+                withJSONObject: object
+            ), let string = String(data: data, encoding: .utf8)
+            else { return "\(object)" }
+            return string
+        }()
         let message: Message = [
             "role": "tool",
-            "content": object,
+            "content": content,
         ]
         appendMessage(message)
     }

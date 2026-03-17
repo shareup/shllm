@@ -111,4 +111,6 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 
 @_exported import class MLXVLM.Gemma3
 @_exported import class MLXVLM.Mistral3VLM
+@_exported import class MLXVLM.Qwen35
+@_exported import class MLXVLM.Qwen35MoE
 @_exported import protocol MLXVLM.VLMModel
