@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.8"
+            from: "0.0.10"
         ),
         .package(
-            url: "https://github.com/huggingface/swift-transformers",
-            from: "1.0.0"
+            url: "https://github.com/shareup/swift-transformers",
+            from: "0.0.1"
         ),
         .package(
             url: "https://github.com/shareup/synchronized.git",
@@ -79,6 +79,10 @@ let package = Package(
 //                .copy("Resources/Qwen3-VL-2B-Thinking-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Instruct-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Thinking-4bit"),
+//                .copy("Resources/Qwen3.5-2B-6bit"),
+//                .copy("Resources/Qwen3.5-9B-4bit"),
+//                .copy("Resources/Qwen3.5-27B-4bit"),
+//               .copy("Resources/Qwen3.5-35B-A3B-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
