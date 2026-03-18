@@ -1,9 +1,14 @@
 import Foundation
 import class MLXLLM.GPTOSSModel
+import class MLXLLM.NemotronHModel
 import class MLXLLM.Qwen2Model
 import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
+import struct MLXLMCommon.ToolCall
+import class MLXVLM.Mistral3VLM
+import class MLXVLM.Qwen35
+import class MLXVLM.Qwen35MoE
 import class MLXVLM.Qwen3VL
 import Synchronized
 
@@ -45,6 +50,35 @@ public extension LLM where Model == Qwen3MoEModel {
 public extension LLM where Model == Qwen3VL {
     static var qwen3VLInstructParser = defaultParser
     static var qwen3VLThinkingParser = defaultsToThinkingParser
+}
+
+public extension LLM where Model == Qwen35 {
+    static func qwen3_5Parser(for input: UserInput) -> ResponseParser {
+        qwen35Parser(for: input)
+    }
+}
+
+public extension LLM where Model == Qwen35MoE {
+    static func qwen3_5MoEParser(for input: UserInput) -> ResponseParser {
+        qwen35Parser(for: input)
+    }
+}
+
+public extension LLM where Model == NemotronHModel {
+    static var nemotronParser: ResponseParser {
+        ThinkingTagProcessor<NemotronHModel>.defaultsToThinking()
+    }
+}
+
+public extension LLM where Model == Mistral3VLM {
+    static var mistral3Parser: ResponseParser {
+        ThinkingTagProcessor<Mistral3VLM>.hybrid(
+            startTags: ["[THINK]", "[THINK]\n"],
+            endTags: ["[/THINK]", "[/THINK]\n"]
+        )
+    }
+
+    static var devstral2Parser: ResponseParser { mistral3Parser }
 }
 
 public extension LLM where Model == GPTOSSModel {
@@ -194,5 +228,17 @@ private extension LLM {
 
     static var defaultsToThinkingParser: ResponseParser {
         ThinkingTagProcessor<Model>.defaultsToThinking()
+    }
+
+    static func qwen35Parser(for input: UserInput) -> ResponseParser {
+        let enableThinking = input.additionalContext?["enable_thinking"] as? Bool
+        // NOTE: Qwen3.5 models usually default to thinking mode. Only the 2B
+        //       models default to non-thinking mode. So, if the `enable_thinking`
+        //       flag is not set, we will default to thinking mode.
+        if enableThinking == false {
+            return hybridParser
+        } else {
+            return defaultsToThinkingParser
+        }
     }
 }

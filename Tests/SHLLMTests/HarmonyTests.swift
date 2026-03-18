@@ -1,4 +1,5 @@
 import Foundation
+import MLXLMCommon
 @testable import SHLLM
 import Synchronized
 import Testing

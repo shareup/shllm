@@ -1,11 +1,11 @@
 import Foundation
-import MLXLLM
 import MLXLMCommon
+import MLXVLM
 @testable import SHLLM
 import Testing
 
 @Suite(.serialized)
-struct Qwen3_8BTests {
+struct Ministral_3_14BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try ministral(input) else { return }
 
         var reasoning = ""
         var result = ""
@@ -28,8 +28,9 @@ struct Qwen3_8BTests {
             }
         }
 
-        Swift.print("<think>\n\(reasoning)\n</think>")
-        #expect(!reasoning.isEmpty)
+        if !reasoning.isEmpty {
+            Swift.print("[THINK]\n\(reasoning)\n[/THINK]")
+        }
 
         Swift.print(result)
         #expect(!result.isEmpty)
@@ -42,7 +43,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try ministral(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -60,13 +61,9 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try ministral(input) else { return }
 
-        let (_reasoning, _text, toolCalls) = try await llm.result
-
-        let reasoning = try #require(_reasoning)
-        Swift.print("<think>\n\(reasoning)\n</think>")
-        #expect(!reasoning.isEmpty)
+        let (_, _text, toolCalls) = try await llm.result
 
         let text = try #require(_text)
         Swift.print(text)
@@ -82,7 +79,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try ministral(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
@@ -98,7 +95,7 @@ struct Qwen3_8BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try qwen3_8B(
+        guard let llm = try ministral(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -124,10 +121,8 @@ struct Qwen3_8BTests {
             }
         }
 
-        Swift.print(reply)
-        #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        #expect(toolCallCount == 1)
+        #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
     }
 
@@ -140,7 +135,7 @@ struct Qwen3_8BTests {
             .user("Get the latest news about Apple, sorted by popularity."),
         ])
 
-        guard let llm = try qwen3_8B(
+        guard let llm = try ministral(
             input,
             tools: [weatherTool, stockTool, newsTool]
         ) else { return }
@@ -170,7 +165,6 @@ struct Qwen3_8BTests {
             }
         }
 
-        #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(toolCallCount >= 1)
         #expect(newsQueryFound)
@@ -188,35 +182,31 @@ struct Qwen3_8BTests {
 
         var input = UserInput(chat: chat)
 
-        guard let llm1 = try qwen3_8B(
+        guard let llm1 = try ministral(
             input,
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
-        #expect(reasoning1 != nil)
-        #expect(text1 == nil)
-        let toolCall1 = try #require(toolCallsOpt1?.first)
+        let (_, text, toolCallsOpt) = try await llm1.result
+        let toolCall = try #require(toolCallsOpt?.first)
 
-        #expect(reasoning1 != nil)
-        #expect(text1 == nil)
-        #expect(toolCall1.function.name == "get_stock_price")
-        #expect(toolCall1.function.arguments["symbol"] == .string("AAPL"))
+        #expect(text == nil)
+        #expect(toolCall.function.name == "get_stock_price")
+        #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
 
-        input.appendAssistantToolCall(toolCall1)
+        input.appendAssistantToolCall(toolCall)
         input.appendToolResult(["price": 123.45])
-        guard let llm2 = try qwen3_8B(
+
+        guard let llm2 = try ministral(
             input,
             tools: [stockTool]
         ) else { return }
 
-        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
-        Swift.print(text2 ?? "")
-        #expect(reasoning2 != nil)
-        #expect(text2?.isEmpty == false)
-        #expect(text2?.contains(oneOf: ["aapl"]) == true)
-        #expect(text2?.contains("123.45") == true)
-        #expect(toolCallsOpt2 == nil)
+        let result = try await llm2.text.result
+        Swift.print(result)
+        #expect(!result.isEmpty)
+        #expect(result.lowercased().contains("aapl"))
+        #expect(result.contains("123.45"))
     }
 
     @Test
@@ -238,9 +228,8 @@ struct Qwen3_8BTests {
             ),
         ]
 
-        // web_search
         var input = UserInput(chat: chat)
-        guard let llm = try qwen3_8B(input, tools: [
+        guard let llm = try ministral(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -256,8 +245,7 @@ struct Qwen3_8BTests {
             ]],
         ])
 
-        // fetch_web_page
-        guard let llm2 = try qwen3_8B(input, tools: [
+        guard let llm2 = try ministral(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
@@ -269,11 +257,11 @@ struct Qwen3_8BTests {
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
 
-        // find_email_in_contacts
-        guard let llm3 = try qwen3_8B(input, tools: [
+        guard let llm3 = try ministral(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
+        #expect(toolCallsOutput3?.count == 1)
         let toolCall3 = try #require(toolCallsOutput3?.first)
         #expect(toolCall3.function.name == "find_email_in_contacts")
 
@@ -282,12 +270,20 @@ struct Qwen3_8BTests {
             "email": "alex@example.com",
         ])
 
-        // send_email
-        guard let llm4 = try qwen3_8B(input, tools: [
+        guard let llm4 = try ministral(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
-        let (_, _, toolCallsOutput4) = try await llm4.result
-        let toolCall4 = try #require(toolCallsOutput4?.first)
+        let (reasoning, text, toolCalls4) = try await llm4.result
+
+        guard let toolCall4 = toolCalls4?.first else {
+            Issue.record("""
+                Did not call send_email: reasoning=\(String(describing: reasoning)), \
+                text=\(String(describing: text))
+                """
+            )
+            return
+        }
+
         #expect(toolCall4.function.name == "send_email")
         let toArg = try #require(toolCall4.function.arguments["to"])
         let subjectArg = try #require(toolCall4.function.arguments["subject"])
@@ -297,12 +293,9 @@ struct Qwen3_8BTests {
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
         input.appendAssistantToolCall(toolCall4)
-        input.appendToolResult([
-            "status": "sent",
-        ])
+        input.appendToolResult(["status": "sent"])
 
-        // assistant response
-        guard let llm5 = try qwen3_8B(input, tools: [
+        guard let llm5 = try ministral(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -310,17 +303,96 @@ struct Qwen3_8BTests {
         Swift.print(response)
         #expect(!response.isEmpty)
         #expect(response.contains(oneOf: ["sent", "emailed"]))
+        #expect(response.lowercased().contains("alex"))
+    }
+
+    @Test
+    @MainActor
+    func canExtractTextFromImageData() async throws {
+        let data = try authenticationFactors
+        guard let llm = try ministral(image: data) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        #expect(response.contains("authentication"))
+    }
+
+    @Test
+    @MainActor
+    func canExtractTextFromImageURL() async throws {
+        let url = try authenticationFactorsURL
+        guard let llm = try ministral(image: url) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        let expected = [
+            "authentication",
+            "Something you forgot",
+            "Something you left in the taxi",
+            "Something that can be chopped off",
+        ]
+        #expect(response.contains(oneOf: expected))
     }
 }
 
-private func qwen3_8B(
+private func ministral(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
-) throws -> LLM<Qwen3Model>? {
+) throws -> LLM<Mistral3VLM>? {
     try loadModel(
-        directory: LLM<Qwen3Model>.qwen3_8B,
+        directory: LLM<Mistral3VLM>.ministral_3_14B,
         input: input,
         tools: tools,
-        responseParser: LLM<Qwen3Model>.qwen3Parser
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
     )
+}
+
+private func ministral(
+    image: Data
+) throws -> LLM<Mistral3VLM>? {
+    try loadModel(
+        directory: LLM<Mistral3VLM>.ministral_3_14B,
+        input: imageInput(image),
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
+    )
+}
+
+private func ministral(
+    image: URL
+) throws -> LLM<Mistral3VLM>? {
+    try loadModel(
+        directory: LLM<Mistral3VLM>.ministral_3_14B,
+        input: imageInput(image),
+        responseParser: LLM<Mistral3VLM>.mistral3Parser
+    )
+}
+
+private var authenticationFactorsURL: URL {
+    get throws {
+        guard let url = Bundle.module.url(
+            forResource: "3-authentication-factors",
+            withExtension: "png"
+        ) else {
+            throw NSError(
+                domain: NSURLErrorDomain,
+                code: NSURLErrorFileDoesNotExist,
+                userInfo: nil
+            )
+        }
+        return url
+    }
+}
+
+private var authenticationFactors: Data {
+    get throws {
+        try Data(contentsOf: authenticationFactorsURL)
+    }
 }

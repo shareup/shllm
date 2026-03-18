@@ -5,6 +5,7 @@ set -eo pipefail
 ids=(
   "CodeLlama-13b-Instruct-hf-4bit-MLX"
   "DeepSeek-R1-Distill-Qwen-7B-4bit"
+  "Devstral-Small-2-24B-Instruct-2512-4bit"
   "gemma-2-2b-it-4bit"
   "gemma-2-9b-it-4bit"
   "gemma-3-12b-it-qat-3bit"
@@ -21,8 +22,10 @@ ids=(
   "lmstudio-community/gpt-oss-20b-MLX-8bit"
   "Meta-Llama-3-8B-Instruct-4bit"
   "Meta-Llama-3.1-8B-Instruct-4bit"
+  "Ministral-3-14B-Instruct-2512-6bit"
   "Mistral-7B-Instruct-v0.3-4bit"
   "Mistral-Nemo-Instruct-2407-4bit"
+  "NVIDIA-Nemotron-3-Nano-30B-A3B-4bit"
   "OpenELM-270M-Instruct"
   "Orchestrator-8B-4bit"
   "phi-2-hf-4bit-mlx"
@@ -41,6 +44,10 @@ ids=(
   "Qwen3-VL-2B-Thinking-4bit"
   "Qwen3-VL-4B-Instruct-4bit"
   "Qwen3-VL-4B-Thinking-4bit"
+  "Qwen3.5-2B-6bit"
+  "Qwen3.5-27B-4bit"
+  "Qwen3.5-35B-A3B-4bit"
+  "Qwen3.5-9B-4bit"
   "SmolLM-135M-Instruct-4bit"
 )
 

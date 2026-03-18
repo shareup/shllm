@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.4"
+            from: "0.0.11"
         ),
         .package(
-            url: "https://github.com/huggingface/swift-transformers",
-            from: "1.0.0"
+            url: "https://github.com/shareup/swift-transformers",
+            from: "0.0.1"
         ),
         .package(
             url: "https://github.com/shareup/synchronized.git",
@@ -58,8 +58,11 @@ let package = Package(
 //                .copy("Resources/LFM2-8B-A1B-4bit"),
 //                .copy("Resources/Llama-3.2-1B-Instruct-4bit"),
 //                .copy("Resources/Llama-3.2-3B-Instruct-4bit"),
+//                .copy("Resources/Devstral-Small-2-24B-Instruct-2512-4bit"),
+//                .copy("Resources/Ministral-3-14B-Instruct-2512-6bit"),
 //                .copy("Resources/Mistral-7B-Instruct-v0.3-4bit"),
 //                .copy("Resources/Mistral-Nemo-Instruct-2407-4bit"),
+//                .copy("Resources/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit"),
 //                .copy("Resources/OpenELM-270M-Instruct"),
 //                .copy("Resources/Phi-3.5-mini-instruct-4bit"),
 //                .copy("Resources/Phi-3.5-MoE-instruct-4bit"),
@@ -76,6 +79,10 @@ let package = Package(
 //                .copy("Resources/Qwen3-VL-2B-Thinking-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Instruct-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Thinking-4bit"),
+//                .copy("Resources/Qwen3.5-2B-6bit"),
+//                .copy("Resources/Qwen3.5-9B-4bit"),
+//                .copy("Resources/Qwen3.5-27B-4bit"),
+//               .copy("Resources/Qwen3.5-35B-A3B-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),

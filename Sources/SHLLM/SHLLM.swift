@@ -99,6 +99,8 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 @_exported import class MLXLLM.LFM2MoEModel
 @_exported import class MLXLLM.LlamaModel
 @_exported import protocol MLXLLM.LLMModel
+@_exported import class MLXLLM.Mistral3TextModel
+@_exported import class MLXLLM.NemotronHModel
 @_exported import class MLXLLM.OpenELMModel
 @_exported import class MLXLLM.Phi3Model
 @_exported import class MLXLLM.PhiModel
@@ -108,4 +110,7 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 @_exported import class MLXLLM.Qwen3MoEModel
 
 @_exported import class MLXVLM.Gemma3
+@_exported import class MLXVLM.Mistral3VLM
+@_exported import class MLXVLM.Qwen35
+@_exported import class MLXVLM.Qwen35MoE
 @_exported import protocol MLXVLM.VLMModel

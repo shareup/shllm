@@ -2,12 +2,35 @@ import Foundation
 import MLXLMCommon
 
 public extension UserInput {
+    mutating func appendAssistantToolCall(_ call: ToolCall) {
+        ensureMessagesForm()
+        let message: Message = [
+            "role": "assistant",
+            "tool_calls": [[
+                "type": "function",
+                "function": [
+                    "name": call.function.name,
+                    "arguments": call.function.arguments
+                        .mapValues { $0.anyValue },
+                ] as [String: Any],
+            ]],
+        ]
+        appendMessage(message)
+    }
+
     /// Append a generic tool-result message suitable for most models.
     mutating func appendToolResult(_ object: [String: Any]) {
         ensureMessagesForm()
+        let content: String = {
+            guard let data = try? JSONSerialization.data(
+                withJSONObject: object
+            ), let string = String(data: data, encoding: .utf8)
+            else { return "\(object)" }
+            return string
+        }()
         let message: Message = [
             "role": "tool",
-            "content": object,
+            "content": content,
         ]
         appendMessage(message)
     }

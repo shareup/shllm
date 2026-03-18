@@ -1,11 +1,11 @@
 import Foundation
-import MLXLLM
 import MLXLMCommon
+import MLXVLM
 @testable import SHLLM
 import Testing
 
 @Suite(.serialized)
-struct Qwen3_8BTests {
+struct Qwen3_5_27BTests {
     @Test
     func canStreamResult() async throws {
         let input: UserInput = .init(messages: [
@@ -13,7 +13,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try qwen3_5__27B(input) else { return }
 
         var reasoning = ""
         var result = ""
@@ -42,7 +42,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try qwen3_5__27B(input) else { return }
 
         var result = ""
         for try await reply in llm.text {
@@ -60,7 +60,7 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try qwen3_5__27B(input) else { return }
 
         let (_reasoning, _text, toolCalls) = try await llm.result
 
@@ -82,11 +82,29 @@ struct Qwen3_8BTests {
             ["role": "user", "content": "What is the meaning of life?"],
         ])
 
-        guard let llm = try qwen3_8B(input) else { return }
+        guard let llm = try qwen3_5__27B(input) else { return }
 
         let result = try await llm.text.result
         Swift.print(result)
         #expect(!result.isEmpty)
+    }
+
+    @Test
+    func canStreamResultWithoutThinking() async throws {
+        var input: UserInput = .init(messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            ["role": "user", "content": "What is the meaning of life?"],
+        ])
+        input.additionalContext = ["enable_thinking": false]
+
+        guard let llm = try qwen3_5__27B(input) else { return }
+
+        let (reasoning, _text, _) = try await llm.result
+        #expect(reasoning == nil)
+
+        let text = try #require(_text)
+        Swift.print(text)
+        #expect(!text.isEmpty)
     }
 
     @Test
@@ -98,7 +116,7 @@ struct Qwen3_8BTests {
             .user("What is the weather in Paris, France?"),
         ])
 
-        guard let llm = try qwen3_8B(
+        guard let llm = try qwen3_5__27B(
             input,
             tools: [weatherTool]
         ) else { return }
@@ -124,10 +142,9 @@ struct Qwen3_8BTests {
             }
         }
 
-        Swift.print(reply)
         #expect(!reasoning.isEmpty)
         #expect(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        #expect(toolCallCount == 1)
+        #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
     }
 
@@ -140,7 +157,7 @@ struct Qwen3_8BTests {
             .user("Get the latest news about Apple, sorted by popularity."),
         ])
 
-        guard let llm = try qwen3_8B(
+        guard let llm = try qwen3_5__27B(
             input,
             tools: [weatherTool, stockTool, newsTool]
         ) else { return }
@@ -188,7 +205,7 @@ struct Qwen3_8BTests {
 
         var input = UserInput(chat: chat)
 
-        guard let llm1 = try qwen3_8B(
+        guard let llm1 = try qwen3_5__27B(
             input,
             tools: [stockTool]
         ) else { return }
@@ -198,14 +215,12 @@ struct Qwen3_8BTests {
         #expect(text1 == nil)
         let toolCall1 = try #require(toolCallsOpt1?.first)
 
-        #expect(reasoning1 != nil)
-        #expect(text1 == nil)
         #expect(toolCall1.function.name == "get_stock_price")
         #expect(toolCall1.function.arguments["symbol"] == .string("AAPL"))
 
         input.appendAssistantToolCall(toolCall1)
         input.appendToolResult(["price": 123.45])
-        guard let llm2 = try qwen3_8B(
+        guard let llm2 = try qwen3_5__27B(
             input,
             tools: [stockTool]
         ) else { return }
@@ -238,9 +253,8 @@ struct Qwen3_8BTests {
             ),
         ]
 
-        // web_search
         var input = UserInput(chat: chat)
-        guard let llm = try qwen3_8B(input, tools: [
+        guard let llm = try qwen3_5__27B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -256,8 +270,7 @@ struct Qwen3_8BTests {
             ]],
         ])
 
-        // fetch_web_page
-        guard let llm2 = try qwen3_8B(input, tools: [
+        guard let llm2 = try qwen3_5__27B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput2) = try await llm2.result
@@ -269,8 +282,7 @@ struct Qwen3_8BTests {
             "content": "Welcome to ACME Conf! Keynote date: November 5, 2025.",
         ])
 
-        // find_email_in_contacts
-        guard let llm3 = try qwen3_8B(input, tools: [
+        guard let llm3 = try qwen3_5__27B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
         let (_, _, toolCallsOutput3) = try await llm3.result
@@ -282,12 +294,19 @@ struct Qwen3_8BTests {
             "email": "alex@example.com",
         ])
 
-        // send_email
-        guard let llm4 = try qwen3_8B(input, tools: [
+        guard let llm4 = try qwen3_5__27B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
-        let (_, _, toolCallsOutput4) = try await llm4.result
-        let toolCall4 = try #require(toolCallsOutput4?.first)
+        let (reasoning, text, toolCalls4) = try await llm4.result
+
+        guard let toolCall4 = toolCalls4?.first else {
+            Issue.record("""
+            Did not call send_email: reasoning=\(String(describing: reasoning)), \
+            text=\(String(describing: text))
+            """)
+            return
+        }
+
         #expect(toolCall4.function.name == "send_email")
         let toArg = try #require(toolCall4.function.arguments["to"])
         let subjectArg = try #require(toolCall4.function.arguments["subject"])
@@ -297,12 +316,9 @@ struct Qwen3_8BTests {
         #expect((bodyArg.anyValue as? String)?.isEmpty == false)
 
         input.appendAssistantToolCall(toolCall4)
-        input.appendToolResult([
-            "status": "sent",
-        ])
+        input.appendToolResult(["status": "sent"])
 
-        // assistant response
-        guard let llm5 = try qwen3_8B(input, tools: [
+        guard let llm5 = try qwen3_5__27B(input, tools: [
             webSearchTool, fetchPageTool, findEmailTool, sendEmailTool,
         ]) else { return }
 
@@ -310,17 +326,104 @@ struct Qwen3_8BTests {
         Swift.print(response)
         #expect(!response.isEmpty)
         #expect(response.contains(oneOf: ["sent", "emailed"]))
+        #expect(response.lowercased().contains("alex"))
+    }
+
+    @Test
+    @MainActor
+    func canExtractTextFromImageData() async throws {
+        let data = try authenticationFactors
+        guard let llm = try qwen3_5__27B(image: data) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        let strings = [
+            "authentication",
+            "Something you forgot",
+            "Something you left in the taxi",
+            "Something that can be chopped off",
+        ]
+        #expect(response.contains(oneOf: strings))
+    }
+
+    @Test
+    @MainActor
+    func canExtractTextFromImageURL() async throws {
+        let url = try authenticationFactorsURL
+        guard let llm = try qwen3_5__27B(image: url) else { return }
+
+        var response = ""
+        for try await token in llm.text {
+            response += token
+        }
+
+        Swift.print(response)
+        let expected = [
+            "authentication",
+            "Something you forgot",
+            "Something you left in the taxi",
+            "Something that can be chopped off",
+        ]
+        #expect(response.contains(oneOf: expected))
     }
 }
 
-private func qwen3_8B(
+private func qwen3_5__27B(
     _ input: UserInput,
     tools: [any ToolProtocol] = []
-) throws -> LLM<Qwen3Model>? {
+) throws -> LLM<Qwen35>? {
     try loadModel(
-        directory: LLM<Qwen3Model>.qwen3_8B,
+        directory: LLM<Qwen35>.qwen3_5__27B,
         input: input,
         tools: tools,
-        responseParser: LLM<Qwen3Model>.qwen3Parser
+        responseParser: LLM<Qwen35>.qwen3_5Parser(for: input)
     )
+}
+
+private func qwen3_5__27B(
+    image: Data
+) throws -> LLM<Qwen35>? {
+    let input = imageInput(image)
+    return try loadModel(
+        directory: LLM<Qwen35>.qwen3_5__27B,
+        input: input,
+        responseParser: LLM<Qwen35>.qwen3_5Parser(for: input)
+    )
+}
+
+private func qwen3_5__27B(
+    image: URL
+) throws -> LLM<Qwen35>? {
+    let input = imageInput(image)
+    return try loadModel(
+        directory: LLM<Qwen35>.qwen3_5__27B,
+        input: input,
+        responseParser: LLM<Qwen35>.qwen3_5Parser(for: input)
+    )
+}
+
+private var authenticationFactorsURL: URL {
+    get throws {
+        guard let url = Bundle.module.url(
+            forResource: "3-authentication-factors",
+            withExtension: "png"
+        ) else {
+            throw NSError(
+                domain: NSURLErrorDomain,
+                code: NSURLErrorFileDoesNotExist,
+                userInfo: nil
+            )
+        }
+        return url
+    }
+}
+
+private var authenticationFactors: Data {
+    get throws {
+        try Data(contentsOf: authenticationFactorsURL)
+    }
 }
