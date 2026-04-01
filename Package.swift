@@ -44,7 +44,7 @@ let package = Package(
                 ),
             ],
 //            resources: [
-//                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
+            //                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
 //                .copy("Resources/gemma-2-2b-it-4bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-3bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-4bit"),
@@ -80,6 +80,7 @@ let package = Package(
 //                .copy("Resources/Qwen3-VL-4B-Instruct-4bit"),
 //                .copy("Resources/Qwen3-VL-4B-Thinking-4bit"),
 //                .copy("Resources/Qwen3.5-2B-6bit"),
+//                .copy("Resources/Qwen3.5-4B-MLX-4bit"),
 //                .copy("Resources/Qwen3.5-9B-4bit"),
 //                .copy("Resources/Qwen3.5-27B-4bit"),
 //               .copy("Resources/Qwen3.5-35B-A3B-4bit"),
