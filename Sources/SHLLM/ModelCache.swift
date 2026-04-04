@@ -46,7 +46,9 @@ func loadModelContext(
         let start = Date()
 
         try SHLLM.assertSupportedDevice
-        let baseContext = try await loadModel(directory: directory)
+        let baseContext = try await loadModel(
+            from: directory, using: TokenizerLoader()
+        )
 
         let config = customConfiguration?(baseContext.configuration)
             ?? baseContext.configuration

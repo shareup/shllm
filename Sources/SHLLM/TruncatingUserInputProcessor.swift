@@ -1,7 +1,6 @@
 import Foundation
 import MLX
 import MLXLMCommon
-import Tokenizers
 
 struct TruncatingUserInputProcessor: UserInputProcessor {
     private let baseProcessor: UserInputProcessor
@@ -109,7 +108,7 @@ struct TruncatingUserInputProcessor: UserInputProcessor {
         let secondHalf = tokens.suffix(Int(half.rounded(.up)))
         assert(firstHalf.count + secondHalf.count <= maxTokenCount)
         let truncatedTokens = Array(firstHalf + secondHalf)
-        return tokenizer.decode(tokens: truncatedTokens)
+        return tokenizer.decode(tokenIds: truncatedTokens)
     }
 
     private func recentMessages<M: UserInputMessage>(

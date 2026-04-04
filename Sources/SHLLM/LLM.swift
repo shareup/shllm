@@ -8,7 +8,6 @@ import MLXLMCommon
 import MLXNN
 import MLXVLM
 import os.log
-import Tokenizers
 
 public enum Response {
     case reasoning(String)

@@ -17,11 +17,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.11"
+            from: "0.0.12"
         ),
         .package(
-            url: "https://github.com/shareup/swift-transformers",
-            from: "0.0.1"
+            url: "https://github.com/DePasqualeOrg/swift-tokenizers",
+            from: "0.2.1"
         ),
         .package(
             url: "https://github.com/shareup/synchronized.git",
@@ -36,15 +36,11 @@ let package = Package(
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXVLM", package: "mlx-swift-lm"),
+                .product(name: "Tokenizers", package: "swift-tokenizers"),
                 .product(name: "Synchronized", package: "synchronized"),
-                .product(
-                    name: "Transformers",
-                    package: "swift-transformers",
-                    moduleAliases: ["Models": "TransformersModels"]
-                ),
             ],
 //            resources: [
-            //                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
+//                .copy("Resources/DeepSeek-R1-Distill-Qwen-7B-4bit"),
 //                .copy("Resources/gemma-2-2b-it-4bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-3bit"),
 //                .copy("Resources/gemma-3-12b-it-qat-4bit"),
@@ -83,7 +79,7 @@ let package = Package(
 //                .copy("Resources/Qwen3.5-4B-MLX-4bit"),
 //                .copy("Resources/Qwen3.5-9B-4bit"),
 //                .copy("Resources/Qwen3.5-27B-4bit"),
-//               .copy("Resources/Qwen3.5-35B-A3B-4bit"),
+//                .copy("Resources/Qwen3.5-35B-A3B-4bit"),
 //            ],
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
