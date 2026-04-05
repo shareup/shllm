@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.12"
+            from: "0.0.13"
         ),
         .package(
             url: "https://github.com/DePasqualeOrg/swift-tokenizers",
