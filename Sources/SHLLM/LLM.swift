@@ -8,7 +8,6 @@ import MLXLMCommon
 import MLXNN
 import MLXVLM
 import os.log
-import Tokenizers
 
 public enum Response {
     case reasoning(String)
@@ -1186,34 +1185,6 @@ extension LLM where Model == Qwen3MoEModel {
     }
 }
 
-// MARK: - Smol
-
-extension LLM where Model == LlamaModel {
-    public static func smolLM(
-        directory: URL,
-        input: UserInput,
-        tools: [any ToolProtocol] = [],
-        maxInputTokenCount: Int? = nil,
-        maxOutputTokenCount: Int? = nil
-    ) throws -> LLM<LlamaModel> {
-        try SHLLM.assertSupportedDevice
-        return .init(
-            directory: directory,
-            input: input,
-            tools: tools,
-            maxInputTokenCount: maxInputTokenCount,
-            maxOutputTokenCount: maxOutputTokenCount
-        )
-    }
-
-    static var smolLM: URL {
-        get throws {
-            let dir = "SmolLM-135M-Instruct-4bit"
-            return try Bundle.shllm.directory(named: dir)
-        }
-    }
-}
-
 // MARK: - Qwen3 VL
 
 extension LLM where Model == Qwen3VL {
@@ -1346,6 +1317,13 @@ extension LLM where Model == Qwen35 {
         }
     }
 
+    static var qwen3_5__4B: URL {
+        get throws {
+            let dir = "Qwen3.5-4B-MLX-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
     static var qwen3_5__9B: URL {
         get throws {
             let dir = "Qwen3.5-9B-4bit"
@@ -1405,6 +1383,34 @@ extension LLM where Model == Qwen35MoE {
     static var qwen3_5MoE__35B_A3B: URL {
         get throws {
             let dir = "Qwen3.5-35B-A3B-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Smol
+
+extension LLM where Model == LlamaModel {
+    public static func smolLM(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<LlamaModel> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount
+        )
+    }
+
+    static var smolLM: URL {
+        get throws {
+            let dir = "SmolLM-135M-Instruct-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

@@ -84,7 +84,7 @@ public enum SHLLM {
 @_exported import struct MLXLMCommon.ToolParameter
 @_exported import enum MLXLMCommon.ToolParameterType
 @_exported import protocol MLXLMCommon.ToolProtocol
-@_exported import typealias Tokenizers.ToolSpec
+@_exported import typealias MLXLMCommon.ToolSpec
 
 extension Chat.Message: @retroactive @unchecked Sendable {}
 
