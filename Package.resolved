@@ -1,5 +1,5 @@
 {
-  "originHash" : "52f195d0f4b33995c883da76c3c392ba8efa2d2b0dc07d1ef3b281443317130b",
+  "originHash" : "0e1ab4a07bf85e219a0e02bbc89d073a5568bda7a85e0c2b2b385df9881f40ce",
   "pins" : [
     {
       "identity" : "mlx-swift",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/shareup/mlx-swift-lm",
       "state" : {
-        "revision" : "22deba9be9b3e815d339bc22f170b0248f4a2caf",
-        "version" : "0.0.13"
+        "revision" : "8825bdd20fbcf982171972a661016817363ca495",
+        "version" : "0.0.14"
       }
     },
     {
