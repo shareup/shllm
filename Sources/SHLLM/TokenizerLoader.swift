@@ -47,10 +47,13 @@ private struct _Tokenizer: MLXLMCommon.Tokenizer {
                 tools: tools,
                 additionalContext: additionalContext
             )
-        } catch let error as Tokenizers.TokenizerError
-            where error == .missingChatTemplate
-        {
-            throw MLXLMCommon.TokenizerError.missingChatTemplate
+        } catch let error as Tokenizers.TokenizerError {
+            switch error {
+            case .missingChatTemplate:
+                throw MLXLMCommon.TokenizerError.missingChatTemplate
+            default:
+                throw error as NSError
+            }
         }
     }
 }
