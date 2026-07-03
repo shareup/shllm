@@ -143,6 +143,33 @@ let stockTool = Tool<StockArguments, StockResponse>(
     StockResponse(price: 150.0)
 }
 
+struct MailReadArguments: Codable, Hashable, Sendable {
+    let account: String
+    let mailbox: String
+    let id: Int
+}
+
+struct MailReadResponse: Codable, Hashable, Sendable {
+    let subject: String
+}
+
+let mailReadSubject = "Your new scale is ready: Meet BodyFit"
+
+let mailReadTool = Tool<
+    MailReadArguments,
+    MailReadResponse
+>(
+    name: "mail_read",
+    description: "Read one email by numeric message id.",
+    parameters: [
+        .required("account", type: .string, description: "The email account name."),
+        .required("mailbox", type: .string, description: "The mailbox path."),
+        .required("id", type: .int, description: "The numeric message id."),
+    ]
+) { _ in
+    MailReadResponse(subject: mailReadSubject)
+}
+
 struct NewsArguments: Codable, CustomStringConvertible, Hashable, Sendable {
     var query: String
     var sortBy: String?

@@ -1,4 +1,5 @@
 import MLXLMCommon
+import MLXVLM
 @testable import SHLLM
 import Testing
 

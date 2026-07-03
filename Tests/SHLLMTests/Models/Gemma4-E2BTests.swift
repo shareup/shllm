@@ -162,26 +162,77 @@ struct Gemma4_E2BTests {
 
         guard let llm1 = try gemma4_E2B(input, tools: [stockTool]) else { return }
 
-        var (reasoning, text, toolCallsOpt) = try await llm1.result
-        let toolCall = try #require(toolCallsOpt?.first)
+        let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
+        let toolCall1 = try #require(toolCallsOpt1?.first)
 
-        Swift.print("<thinking>\(reasoning ?? "")<thinking>\n\(text ?? "")")
-        #expect(reasoning != nil)
-        #expect(text == nil)
-        #expect(toolCall.function.name == "get_stock_price")
-        #expect(toolCall.function.arguments["symbol"] == .string("AAPL"))
+        Swift.print("<thinking>\(reasoning1 ?? "")<thinking>\n\(text1 ?? "")")
+        #expect(reasoning1 != nil)
+        #expect(text1 == nil)
+        #expect(toolCall1.function.name == "get_stock_price")
+        #expect(toolCall1.function.arguments["symbol"] == .string("AAPL"))
 
-        input.appendAssistantToolCall(toolCall)
+        input.appendAssistantToolCall(toolCall1)
         input.appendToolResult(["price": 123.45])
 
         guard let llm2 = try gemma4_E2B(input, tools: [stockTool]) else { return }
 
-        (reasoning, text, toolCallsOpt) = try await llm2.result
-        let result = try #require(text)
-        Swift.print("<thinking>\(reasoning ?? "")<thinking>\n\(result)")
+        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
+        let result = try #require(text2)
+        Swift.print("<thinking>\(reasoning2 ?? "")<thinking>\n\(result)")
         #expect(!result.isEmpty)
         #expect(result.lowercased().contains("aapl"))
         #expect(result.contains("123.45"))
+        #expect(toolCallsOpt2 == nil)
+    }
+
+    @Test
+    func canUseToolsWithNonStringArgumentsAndRespond() async throws {
+        guard SHLLM.isSupportedDevice else {
+            Swift.print("⚠️ Metal GPU not available")
+            return
+        }
+
+        let chat: [Chat.Message] = [
+            .system("""
+            <|think|>
+            You are an email assistant. When asked to read an email, call mail_read exactly once.
+            After the tool result is provided, reply with the email subject exactly and do not call tools again.
+            <|think|>
+            """),
+            .user("Read email 158348 from account me@example.com in mailbox INBOX."),
+        ]
+
+        var input = UserInput(
+            chat: chat,
+            additionalContext: ["enable_thinking": true]
+        )
+
+        guard let llm1 = try gemma4_E2B(input, tools: [mailReadTool]) else { return }
+
+        let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
+        let toolCall1 = try #require(toolCallsOpt1?.first)
+
+        Swift.print("<thinking>\(reasoning1 ?? "")<thinking>\n\(text1 ?? "")")
+        #expect(reasoning1 != nil)
+        #expect(text1 == nil)
+        #expect(toolCall1.function.name == "mail_read")
+        #expect(toolCall1.function.arguments["account"] == .string("me@example.com"))
+        #expect(toolCall1.function.arguments["mailbox"] == .string("INBOX"))
+
+        let idArgument = try #require(toolCall1.function.arguments["id"])
+        #expect(idArgument == .int(158_348))
+        #expect(idArgument != .string("158348"))
+
+        input.appendAssistantToolCall(toolCall1)
+        input.appendToolResult(MailReadResponse(subject: mailReadSubject))
+
+        guard let llm2 = try gemma4_E2B(input, tools: [mailReadTool]) else { return }
+
+        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
+        let result = try #require(text2)
+        Swift.print("<thinking>\(reasoning2 ?? "")<thinking>\n\(result)")
+        #expect(result.contains(mailReadSubject))
+        #expect(toolCallsOpt2 == nil)
     }
 }
 

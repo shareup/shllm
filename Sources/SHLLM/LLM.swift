@@ -145,6 +145,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 }
 
             case let .loaded(context):
+                let toolSchemas = input.tools
                 let input = try await context.processor.prepare(input: input)
                 var params = generateParameters
                 if let maxOutputTokenCount {
@@ -153,7 +154,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
-                    context: context
+                    context: context,
+                    tools: toolSchemas
                 )
 
                 var iterator = stream.makeAsyncIterator()
