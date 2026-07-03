@@ -33,14 +33,14 @@ if [ "$xcodeVersion" -ge 26 ]; then
     echo "❌ Metal toolchain is not installed"
 
     echo "⬇️ Downloading Metal toolchain..."
-    eval "exec xcodebuild \
+    xcodebuild \
       -downloadComponent metalToolchain \
-      -exportPath /tmp/metalToolchainDownload/"
+      -exportPath /tmp/metalToolchainDownload/
 
     echo "🧰 Installing Metal toolchain..."
-    eval "exec xcodebuild \
+    xcodebuild \
       -importComponent metalToolchain \
-      -importPath /tmp/metalToolchainDownload/*.exportedBundle"
+      -importPath /tmp/metalToolchainDownload/*.exportedBundle
   fi
 fi
 
