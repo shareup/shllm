@@ -298,7 +298,7 @@ final class Gemma4ChannelParser<Model: LanguageModel>: @unchecked Sendable {
                 queuedResponses.append(.toolCall(toolCall))
 
             case .info:
-                break
+                flushBuffer()
             }
 
             return dequeue()
@@ -383,6 +383,22 @@ final class Gemma4ChannelParser<Model: LanguageModel>: @unchecked Sendable {
             let reasoning = String(buffer[..<reasoningEndIndex])
             buffer = String(buffer[reasoningEndIndex...])
             enqueueReasoning(reasoning)
+        }
+
+        private mutating func flushBuffer() {
+            guard !buffer.isEmpty else { return }
+
+            let text = buffer
+            buffer = ""
+
+            switch mode {
+            case .detectingHeader, .text:
+                mode = .text
+                enqueueText(text)
+
+            case .reasoning:
+                enqueueReasoning(text)
+            }
         }
 
         private mutating func enqueueReasoning(_ reasoning: String) {

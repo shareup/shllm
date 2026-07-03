@@ -142,6 +142,30 @@ struct Gemma4ChannelParserTests {
         #expect(output.toolCalls.isEmpty)
     }
 
+    @Test
+    func flushesPartialEndTagOnInfo() {
+        let output = parse(generations: [
+            .chunk("<|channel>thought\nReasoning<chan"),
+            .info(.test),
+        ])
+
+        #expect(output.reasoning == "Reasoning<chan")
+        #expect(output.text.isEmpty)
+        #expect(output.toolCalls.isEmpty)
+    }
+
+    @Test
+    func flushesPartialHeaderOnInfo() {
+        let output = parse(generations: [
+            .chunk("<|channel>thought"),
+            .info(.test),
+        ])
+
+        #expect(output.reasoning.isEmpty)
+        #expect(output.text == "<|channel>thought")
+        #expect(output.toolCalls.isEmpty)
+    }
+
     private func parse(chunks: [String]) -> ParsedOutput {
         parse(generations: chunks.map(Generation.chunk) + [.info(.test)])
     }
