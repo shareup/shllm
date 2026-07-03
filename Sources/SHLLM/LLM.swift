@@ -145,6 +145,7 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 }
 
             case let .loaded(context):
+                let toolSchemas = input.tools
                 let input = try await context.processor.prepare(input: input)
                 var params = generateParameters
                 if let maxOutputTokenCount {
@@ -153,7 +154,8 @@ public struct LLM<Model: LanguageModel>: AsyncSequence {
                 let stream = try MLXLMCommon.generate(
                     input: input,
                     parameters: params,
-                    context: context
+                    context: context,
+                    tools: toolSchemas
                 )
 
                 var iterator = stream.makeAsyncIterator()
@@ -620,6 +622,135 @@ extension LLM where Model == Gemma3 {
     static var gemma3_27B: URL {
         get throws {
             let dir = "gemma-3-27b-it-qat-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Gemma 4 Vision
+
+extension LLM where Model == Gemma4 {
+    /// **gemma-4-e2b** and **gemma-4-e4b**
+    ///
+    /// To enable thinking, set
+    /// `UserInput(additionalContext: ["enable_thinking": true])`
+    /// and add `<|think|>` to the **beginning** and **end** of
+    /// the system prompt. (The documentation says to just add it to
+    /// the beginning of the system prompt, but testing has shown it
+    /// to be more reliable when added to the beginning and end of the
+    /// system prompt.
+    ///
+    /// https://huggingface.co/google/gemma-4-12B-it#2-thinking-mode-configuration
+    public static func gemma4(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma4> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<turn|>"]
+                return config
+            },
+            generateParameters: generateParameters,
+            responseParser: gemma4Parser
+        )
+    }
+
+    // https://huggingface.co/google/gemma-4-E2B-it#best-practices
+    //
+    // 1. Sampling Parameters
+    //
+    // - temperature=1.0
+    // - top_p=0.95
+    // - top_k=64
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 1.0,
+            topP: 0.95,
+            topK: 64
+        )
+    }
+
+    static var gemma4_E2B: URL {
+        get throws {
+            let dir = "gemma-4-e2b-it-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+
+    static var gemma4_E4B: URL {
+        get throws {
+            let dir = "gemma-4-e4b-it-4bit"
+            return try Bundle.shllm.directory(named: dir)
+        }
+    }
+}
+
+// MARK: - Gemma 4 Unified Vision
+
+extension LLM where Model == Gemma4Unified {
+    /// **gemma-4-12b**
+    ///
+    /// To enable thinking, set
+    /// `UserInput(additionalContext: ["enable_thinking": true])`
+    /// and add `<|think|>` to the **beginning** and **end** of
+    /// the system prompt. (The documentation says to just add it to
+    /// the beginning of the system prompt, but testing has shown it
+    /// to be more reliable when added to the beginning and end of the
+    /// system prompt.
+    ///
+    /// https://huggingface.co/google/gemma-4-12B-it#2-thinking-mode-configuration
+    public static func gemma4Unified(
+        directory: URL,
+        input: UserInput,
+        tools: [any ToolProtocol] = [],
+        maxInputTokenCount: Int? = nil,
+        maxOutputTokenCount: Int? = nil
+    ) throws -> LLM<Gemma4Unified> {
+        try SHLLM.assertSupportedDevice
+        return .init(
+            directory: directory,
+            input: input,
+            tools: tools,
+            maxInputTokenCount: maxInputTokenCount,
+            maxOutputTokenCount: maxOutputTokenCount,
+            customConfiguration: { config in
+                var config = config
+                config.extraEOSTokens = ["<turn|>"]
+                return config
+            },
+            generateParameters: generateParameters,
+            responseParser: gemma4Parser
+        )
+    }
+
+    // https://huggingface.co/google/gemma-4-12B-it#best-practices
+    //
+    // 1. Sampling Parameters
+    //
+    // - temperature=1.0
+    // - top_p=0.95
+    // - top_k=64
+    static var generateParameters: GenerateParameters {
+        GenerateParameters(
+            temperature: 1.0,
+            topP: 0.95,
+            topK: 64
+        )
+    }
+
+    static var gemma4_12B: URL {
+        get throws {
+            let dir = "gemma-4-12B-it-4bit"
             return try Bundle.shllm.directory(named: dir)
         }
     }

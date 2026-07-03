@@ -130,6 +130,52 @@ struct Qwen3__0_6BTests {
         #expect(toolCallCount >= 1)
         #expect(weatherLocationFound)
     }
+
+    @Test
+    func canUseToolsWithNonStringArgumentsAndRespond() async throws {
+        let chat: [Chat.Message] = [
+            .system("""
+            You are an email assistant. When asked to read an email, call mail_read exactly once.
+            After the tool result is provided, reply with the email subject exactly and do not call tools again.
+            """),
+            .user("Read email 158348 from account me@example.com in mailbox INBOX."),
+        ]
+
+        var input = UserInput(chat: chat)
+
+        guard let llm1 = try qwen3__0_6B(
+            input,
+            tools: [mailReadTool]
+        ) else { return }
+
+        let (reasoning, text, toolCallsOpt) = try await llm1.result
+        let toolCall = try #require(toolCallsOpt?.first)
+
+        #expect(reasoning != nil)
+        #expect(text == nil)
+        #expect(toolCall.function.name == "mail_read")
+        #expect(toolCall.function.arguments["account"] == .string("me@example.com"))
+        #expect(toolCall.function.arguments["mailbox"] == .string("INBOX"))
+
+        let idArgument = try #require(toolCall.function.arguments["id"])
+        #expect(idArgument == .int(158_348))
+        #expect(idArgument != .string("158348"))
+
+        input.appendAssistantToolCall(toolCall)
+        input.appendToolResult(MailReadResponse(subject: mailReadSubject))
+
+        guard let llm2 = try qwen3__0_6B(
+            input,
+            tools: [mailReadTool]
+        ) else { return }
+
+        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
+        let result = try #require(text2)
+        Swift.print(result)
+        #expect(reasoning2 != nil)
+        #expect(result.contains(mailReadSubject))
+        #expect(toolCallsOpt2 == nil)
+    }
 }
 
 private func qwen3__0_6B(

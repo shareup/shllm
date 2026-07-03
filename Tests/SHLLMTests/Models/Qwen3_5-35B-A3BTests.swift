@@ -235,6 +235,51 @@ struct Qwen3_5_35B_A3BTests {
     }
 
     @Test
+    func canUseToolsWithNonStringArgumentsAndRespond() async throws {
+        let chat: [Chat.Message] = [
+            .system("""
+            You are an email assistant. When asked to read an email, call mail_read exactly once.
+            After the tool result is provided, reply with the email subject exactly and do not call tools again.
+            """),
+            .user("Read email 158348 from account me@example.com in mailbox INBOX."),
+        ]
+
+        var input = UserInput(chat: chat)
+
+        guard let llm1 = try qwen3_5MoE(
+            input,
+            tools: [mailReadTool]
+        ) else { return }
+
+        let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
+        Swift.print("<thinking>\(reasoning1 ?? "")</thinking>\n\(text1 ?? "")")
+        #expect(reasoning1 != nil)
+        #expect(text1 == nil)
+        let toolCall1 = try #require(toolCallsOpt1?.first)
+
+        #expect(toolCall1.function.name == "mail_read")
+        #expect(toolCall1.function.arguments["account"] == .string("me@example.com"))
+        #expect(toolCall1.function.arguments["mailbox"] == .string("INBOX"))
+
+        let idArgument = try #require(toolCall1.function.arguments["id"])
+        #expect(idArgument == .int(158_348))
+        #expect(idArgument != .string("158348"))
+
+        input.appendAssistantToolCall(toolCall1)
+        input.appendToolResult(MailReadResponse(subject: mailReadSubject))
+        guard let llm2 = try qwen3_5MoE(
+            input,
+            tools: [mailReadTool]
+        ) else { return }
+
+        let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
+        Swift.print("<thinking>\(reasoning2 ?? "")</thinking>\n\(text2 ?? "")")
+        #expect(reasoning2 != nil)
+        #expect(text2?.contains(mailReadSubject) == true)
+        #expect(toolCallsOpt2 == nil)
+    }
+
+    @Test
     func canCompleteMultiToolWorkflowAndEmail() async throws {
         let chat: [Chat.Message] = [
             .system("""

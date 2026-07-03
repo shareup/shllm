@@ -17,7 +17,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/shareup/mlx-swift-lm",
-            from: "0.0.14"
+            from: "0.0.16"
         ),
         .package(
             url: "https://github.com/DePasqualeOrg/swift-tokenizers",
@@ -49,6 +49,9 @@ let package = Package(
 //                .copy("Resources/gemma-3-27b-it-qat-4bit"),
 //                .copy("Resources/gemma-3-4b-it-qat-3bit"),
 //                .copy("Resources/gemma-3-4b-it-qat-4bit"),
+//                .copy("Resources/gemma-4-e2b-it-4bit"),
+//                .copy("Resources/gemma-4-e4b-it-4bit"),
+//                .copy("Resources/gemma-4-12B-it-4bit"),
 //                .copy("Resources/gpt-oss-20b-MLX-8bit"),
 //                .copy("Resources/gpt-oss-20b-MXFP4-Q4"),
 //                .copy("Resources/LFM2-8B-A1B-4bit"),
