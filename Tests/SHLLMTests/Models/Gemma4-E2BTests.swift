@@ -212,7 +212,7 @@ struct Gemma4_E2BTests {
         let (reasoning1, text1, toolCallsOpt1) = try await llm1.result
         let toolCall1 = try #require(toolCallsOpt1?.first)
 
-        Swift.print("<thinking>\(reasoning1 ?? "")<thinking>\n\(text1 ?? "")")
+        Swift.print("<thinking>\(reasoning1 ?? "")</thinking>\n\(text1 ?? "")")
         #expect(reasoning1 != nil)
         #expect(text1 == nil)
         #expect(toolCall1.function.name == "mail_read")
