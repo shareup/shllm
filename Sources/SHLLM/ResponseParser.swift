@@ -6,6 +6,8 @@ import class MLXLLM.Qwen3Model
 import class MLXLLM.Qwen3MoEModel
 import enum MLXLMCommon.Generation
 import struct MLXLMCommon.ToolCall
+import class MLXVLM.Gemma4
+import class MLXVLM.Gemma4Unified
 import class MLXVLM.Mistral3VLM
 import class MLXVLM.Qwen35
 import class MLXVLM.Qwen35MoE
@@ -50,6 +52,14 @@ public extension LLM where Model == Qwen3MoEModel {
 public extension LLM where Model == Qwen3VL {
     static var qwen3VLInstructParser = defaultParser
     static var qwen3VLThinkingParser = defaultsToThinkingParser
+}
+
+public extension LLM where Model == Gemma4 {
+    static var gemma4Parser: ResponseParser { Gemma4ChannelParser<Model>().parser }
+}
+
+public extension LLM where Model == Gemma4Unified {
+    static var gemma4Parser: ResponseParser { Gemma4ChannelParser<Model>().parser }
 }
 
 public extension LLM where Model == Qwen35 {
@@ -240,5 +250,176 @@ private extension LLM {
         } else {
             return defaultsToThinkingParser
         }
+    }
+}
+
+// MARK: - Gemma 4 Channel Parser
+
+/// Parses Gemma 4's channel markers to separate reasoning from text.
+///
+/// Gemma 4 models wrap their output in channels delimited by special tokens:
+/// - `<|channel>thought\n` starts a thinking block (reasoning)
+/// - `<channel|>` ends the thinking block and starts the final response (text)
+///
+/// The model always begins with `<|channel>thought\n`, so the parser starts by
+/// buffering until the thought-channel header is consumed.  When `<channel|>`
+/// is encountered, it switches to text mode.  The channel markers themselves
+/// are consumed and not emitted.
+///
+/// Reference: https://huggingface.co/google/gemma-4-12B-it#channel-thought
+final class Gemma4ChannelParser<Model: LanguageModel>: @unchecked Sendable {
+    private let state = Locked(ParserState())
+
+    var parser: LLM<Model>.ResponseParser {
+        LLM.ResponseParser { (generation: Generation) -> Response? in
+            self.state.access { state in
+                state.process(generation)
+            }
+        }
+    }
+
+    private struct ParserState {
+        private enum Mode {
+            case detectingHeader
+            case reasoning
+            case text
+        }
+
+        private var mode = Mode.detectingHeader
+        private var buffer = ""
+        private var queuedResponses = [Response]()
+
+        mutating func process(_ generation: Generation) -> Response? {
+            switch generation {
+            case let .chunk(chunk):
+                process(chunk)
+
+            case let .toolCall(toolCall):
+                queuedResponses.append(.toolCall(toolCall))
+
+            case .info:
+                break
+            }
+
+            return dequeue()
+        }
+
+        private mutating func process(_ chunk: String) {
+            guard !chunk.isEmpty else { return }
+
+            switch mode {
+            case .detectingHeader:
+                buffer += chunk
+                processHeaderBuffer()
+
+            case .reasoning:
+                buffer += chunk
+                processReasoningBuffer()
+
+            case .text:
+                enqueueText(chunk)
+            }
+        }
+
+        private mutating func processHeaderBuffer() {
+            let thoughtHeader = Gemma4ChannelMarkers.thoughtHeader
+            let endTag = Gemma4ChannelMarkers.endTag
+
+            if buffer.hasPrefix(thoughtHeader) {
+                let remainder = String(buffer.dropFirst(thoughtHeader.count))
+                buffer = ""
+                mode = .reasoning
+
+                if !remainder.isEmpty {
+                    buffer = remainder
+                    processReasoningBuffer()
+                }
+                return
+            }
+
+            if thoughtHeader.hasPrefix(buffer) {
+                return
+            }
+
+            if buffer.hasPrefix(endTag) {
+                let remainder = String(buffer.dropFirst(endTag.count))
+                buffer = ""
+                mode = .text
+                enqueueText(remainder)
+                return
+            }
+
+            if endTag.hasPrefix(buffer) {
+                return
+            }
+
+            let text = buffer
+            buffer = ""
+            mode = .text
+            enqueueText(text)
+        }
+
+        private mutating func processReasoningBuffer() {
+            let endTag = Gemma4ChannelMarkers.endTag
+
+            if let range = buffer.range(of: endTag) {
+                let reasoning = String(buffer[..<range.lowerBound])
+                let text = String(buffer[range.upperBound...])
+                buffer = ""
+                mode = .text
+                enqueueReasoning(reasoning)
+                enqueueText(text)
+                return
+            }
+
+            let pendingLength = buffer.lengthOfSuffixMatchingPrefix(of: endTag)
+            guard pendingLength > 0 else {
+                enqueueReasoning(buffer)
+                buffer = ""
+                return
+            }
+
+            let reasoningEndIndex = buffer.index(buffer.endIndex, offsetBy: -pendingLength)
+            let reasoning = String(buffer[..<reasoningEndIndex])
+            buffer = String(buffer[reasoningEndIndex...])
+            enqueueReasoning(reasoning)
+        }
+
+        private mutating func enqueueReasoning(_ reasoning: String) {
+            guard !reasoning.isEmpty else { return }
+            queuedResponses.append(.reasoning(reasoning))
+        }
+
+        private mutating func enqueueText(_ text: String) {
+            guard !text.isEmpty else { return }
+            queuedResponses.append(.text(text))
+        }
+
+        private mutating func dequeue() -> Response? {
+            guard !queuedResponses.isEmpty else { return nil }
+            return queuedResponses.removeFirst()
+        }
+    }
+}
+
+private enum Gemma4ChannelMarkers {
+    static let thoughtHeader = "<|channel>thought\n"
+    static let endTag = "<channel|>"
+}
+
+private extension String {
+    func lengthOfSuffixMatchingPrefix(of marker: String) -> Int {
+        let maxLength = Swift.min(count, marker.count - 1)
+        guard maxLength > 0 else { return 0 }
+
+        for length in stride(from: maxLength, through: 1, by: -1) {
+            let suffixStartIndex = index(endIndex, offsetBy: -length)
+            let suffix = String(self[suffixStartIndex...])
+            if marker.hasPrefix(suffix) {
+                return length
+            }
+        }
+
+        return 0
     }
 }

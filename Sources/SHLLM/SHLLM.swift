@@ -94,6 +94,8 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 
 @_exported import class MLXLLM.Gemma2Model
 @_exported import class MLXLLM.Gemma3TextModel
+@_exported import class MLXLLM.Gemma4Model
+@_exported import class MLXLLM.Gemma4TextModel
 @_exported import class MLXLLM.GemmaModel
 @_exported import class MLXLLM.GPTOSSModel
 @_exported import class MLXLLM.LFM2MoEModel
@@ -110,6 +112,8 @@ extension Chat.Message: @retroactive @unchecked Sendable {}
 @_exported import class MLXLLM.Qwen3MoEModel
 
 @_exported import class MLXVLM.Gemma3
+@_exported import class MLXVLM.Gemma4
+@_exported import class MLXVLM.Gemma4Unified
 @_exported import class MLXVLM.Mistral3VLM
 @_exported import class MLXVLM.Qwen35
 @_exported import class MLXVLM.Qwen35MoE
