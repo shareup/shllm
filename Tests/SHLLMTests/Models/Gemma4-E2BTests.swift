@@ -178,7 +178,7 @@ struct Gemma4_E2BTests {
 
         let (reasoning2, text2, toolCallsOpt2) = try await llm2.result
         let result = try #require(text2)
-        Swift.print("<thinking>\(reasoning2 ?? "")<thinking>\n\(result)")
+        Swift.print("<thinking>\(reasoning2 ?? "")</thinking>\n\(result)")
         #expect(!result.isEmpty)
         #expect(result.lowercased().contains("aapl"))
         #expect(result.contains("123.45"))
