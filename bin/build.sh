@@ -9,16 +9,29 @@ if [[ "${TRACE-0}" == "1" ]]; then
 fi
 
 if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
-  echo 'Usage: ./build.sh'
+  echo 'Usage: ./build.sh [--verbose|-v]'
+  echo
+  echo 'Build the SHLLM library (Xcode/Metal aware).'
+  echo
+  echo 'Options:'
+  echo '  --verbose, -v   Bypass xcbeautify and show raw xcodebuild output.'
   exit
 fi
+
+verbose=false
+for arg in "$@"; do
+  case "$arg" in
+    --verbose|-v) verbose=true ;;
+    *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+  esac
+done
 
 DIR=$(dirname "$0")
 pushd "$DIR/.." &>/dev/null
 
 beautify=""
-if command -v xcbeautify &>/dev/null; then
-  beautify="| xcbeautify"
+if ! $verbose && command -v xcbeautify &>/dev/null; then
+  beautify="2>&1 | xcbeautify"
 fi
 
 eval "exec xcodebuild \
