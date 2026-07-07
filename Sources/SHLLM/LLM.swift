@@ -633,12 +633,7 @@ extension LLM where Model == Gemma4 {
     /// **gemma-4-e2b** and **gemma-4-e4b**
     ///
     /// To enable thinking, set
-    /// `UserInput(additionalContext: ["enable_thinking": true])`
-    /// and add `<|think|>` to the **beginning** and **end** of
-    /// the system prompt. (The documentation says to just add it to
-    /// the beginning of the system prompt, but testing has shown it
-    /// to be more reliable when added to the beginning and end of the
-    /// system prompt.
+    /// `UserInput(additionalContext: ["enable_thinking": true])`.
     ///
     /// https://huggingface.co/google/gemma-4-12B-it#2-thinking-mode-configuration
     public static func gemma4(
@@ -701,12 +696,7 @@ extension LLM where Model == Gemma4Unified {
     /// **gemma-4-12b**
     ///
     /// To enable thinking, set
-    /// `UserInput(additionalContext: ["enable_thinking": true])`
-    /// and add `<|think|>` to the **beginning** and **end** of
-    /// the system prompt. (The documentation says to just add it to
-    /// the beginning of the system prompt, but testing has shown it
-    /// to be more reliable when added to the beginning and end of the
-    /// system prompt.
+    /// `UserInput(additionalContext: ["enable_thinking": true])`.
     ///
     /// https://huggingface.co/google/gemma-4-12B-it#2-thinking-mode-configuration
     public static func gemma4Unified(
@@ -717,6 +707,12 @@ extension LLM where Model == Gemma4Unified {
         maxOutputTokenCount: Int? = nil
     ) throws -> LLM<Gemma4Unified> {
         try SHLLM.assertSupportedDevice
+        var input = input
+        var additionalContext = input.additionalContext ?? [:]
+        if additionalContext["enable_thinking"] == nil {
+            additionalContext["enable_thinking"] = true
+        }
+        input.additionalContext = additionalContext
         return .init(
             directory: directory,
             input: input,

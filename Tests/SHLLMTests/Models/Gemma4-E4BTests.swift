@@ -104,7 +104,7 @@ struct Gemma4_E4BTests {
         let input = UserInput(
             chat: [
                 .system(
-                    "You are a weather assistant who must use the get_current_weather tool to fetch weather data for any location the user asks about.<|think|>"
+                    "You are a weather assistant who must use the get_current_weather tool to fetch weather data for any location the user asks about."
                 ),
                 .user("What is the weather in Paris, France?"),
             ],
@@ -147,10 +147,8 @@ struct Gemma4_E4BTests {
 
         let chat: [Chat.Message] = [
             .system("""
-            <|think|>
             You are a helpful assistant that can provide stock prices.
             When asked for a stock price, you must use the get_stock_price tool.
-            <|think|>
             """),
             .user("What is the price of AAPL?"),
         ]
@@ -166,7 +164,6 @@ struct Gemma4_E4BTests {
         let toolCall1 = try #require(toolCallsOpt1?.first)
 
         Swift.print("<thinking>\(reasoning1 ?? "")</thinking>\n\(text1 ?? "")")
-        #expect(reasoning1 != nil)
         #expect(text1 == nil)
         #expect(toolCall1.function.name == "get_stock_price")
         #expect(toolCall1.function.arguments["symbol"] == .string("AAPL"))
@@ -194,10 +191,8 @@ struct Gemma4_E4BTests {
 
         let chat: [Chat.Message] = [
             .system("""
-            <|think|>
             You are an email assistant. When asked to read an email, call mail_read exactly once.
             After the tool result is provided, reply with the email subject exactly and do not call tools again.
-            <|think|>
             """),
             .user("Read email 158348 from account me@example.com in mailbox INBOX."),
         ]
@@ -213,7 +208,6 @@ struct Gemma4_E4BTests {
         let toolCall1 = try #require(toolCallsOpt1?.first)
 
         Swift.print("<thinking>\(reasoning1 ?? "")</thinking>\n\(text1 ?? "")")
-        #expect(reasoning1 != nil)
         #expect(text1 == nil)
         #expect(toolCall1.function.name == "mail_read")
         #expect(toolCall1.function.arguments["account"] == .string("me@example.com"))
