@@ -296,3 +296,69 @@ let sendEmailTool = Tool<SendEmailInput, SendEmailOutput>(
 ) { _ in
     SendEmailOutput(status: "sent")
 }
+
+func nullableToolSearchInput(enableThinking: Bool? = nil) -> UserInput {
+    let toolSearchSchema: ToolSpec = [
+        "type": "function",
+        "function": [
+            "name": "tool_search",
+            "description": "Finds and reveals tools matching a query.",
+            "parameters": [
+                "type": "object",
+                "properties": [
+                    "query": ["type": "string"],
+                ],
+                "required": ["query"],
+            ],
+        ],
+    ]
+    let contactUpdateSchema: ToolSpec = [
+        "type": "function",
+        "function": [
+            "name": "contact_update",
+            "description": "Updates a contact.",
+            "parameters": [
+                "type": "object",
+                "properties": [
+                    "id": ["type": "string"],
+                    "contact_type": [
+                        "type": ["string", "null"],
+                        "enum": ["person", "organization", NSNull()],
+                    ],
+                ],
+                "required": ["id"],
+            ],
+        ],
+    ]
+
+    return UserInput(
+        messages: [
+            ["role": "system", "content": "You are a helpful assistant."],
+            [
+                "role": "user",
+                "content": "Update contact contact-123 to have contact_type organization.",
+            ],
+            [
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [[
+                    "id": "tool-search",
+                    "type": "function",
+                    "function": [
+                        "name": "tool_search",
+                        "arguments": [
+                            "query": "update contact type",
+                        ],
+                    ],
+                ]],
+            ],
+            [
+                "role": "tool",
+                "tool_call_id": "tool-search",
+                "content": #"{"has_more":false,"revealed_tools":["contact_update"]}"#,
+            ],
+        ],
+        tools: [toolSearchSchema, contactUpdateSchema],
+        additionalContext: enableThinking.map { ["enable_thinking": $0] }
+    )
+}

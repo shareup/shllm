@@ -235,6 +235,26 @@ struct Qwen3_5_27BTests {
     }
 
     @Test
+    func canContinueAfterToolSearchRevealsNullableSchema() async throws {
+        let input = nullableToolSearchInput(enableThinking: false)
+
+        guard let llm = try qwen3_5__27B(input) else { return }
+
+        let (reasoning, text, toolCalls) = try await llm.result
+        Swift.print("""
+        <thinking>\(reasoning ?? "")</thinking>
+        \(text ?? "")
+        <tool_calls>\(String(describing: toolCalls))</tool_calls>
+        """)
+        let calls = try #require(toolCalls)
+        #expect(calls.count == 1)
+        let call = try #require(calls.first)
+        #expect(call.function.name == "contact_update")
+        #expect(call.function.arguments["id"] == .string("contact-123"))
+        #expect(call.function.arguments["contact_type"] == .string("organization"))
+    }
+
+    @Test
     func canUseToolsWithNonStringArgumentsAndRespond() async throws {
         let chat: [Chat.Message] = [
             .system("""

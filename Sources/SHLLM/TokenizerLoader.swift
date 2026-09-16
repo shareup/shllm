@@ -44,7 +44,7 @@ private struct _Tokenizer: MLXLMCommon.Tokenizer {
         do {
             return try upstream.applyChatTemplate(
                 messages: messages,
-                tools: tools,
+                tools: tools?.map { $0.mapValues { replacingNulls($0) as any Sendable } },
                 additionalContext: additionalContext
             )
         } catch let error as Tokenizers.TokenizerError {
@@ -54,6 +54,19 @@ private struct _Tokenizer: MLXLMCommon.Tokenizer {
             default:
                 throw error as NSError
             }
+        }
+    }
+
+    private func replacingNulls(_ value: any Sendable) -> (any Sendable)? {
+        switch value {
+        case is NSNull:
+            nil
+        case let array as [any Sendable]:
+            array.map(replacingNulls)
+        case let dictionary as [String: any Sendable]:
+            dictionary.mapValues(replacingNulls)
+        default:
+            value
         }
     }
 }
