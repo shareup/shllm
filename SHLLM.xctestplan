@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "40F1296B-465E-4366-A38F-73728D73C561",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SHLLMTests",
+        "name" : "SHLLMTests"
+      }
+    }
+  ],
+  "version" : 1
+}
